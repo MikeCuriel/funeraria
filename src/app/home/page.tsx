@@ -3,7 +3,7 @@
 import { toPng } from "html-to-image";
 import { useState } from "react";
 import {Great_Vibes, Didact_Gothic} from 'next/font/google';
-import {DragDrop} from "../../componets/drag";
+// import {DragDrop} from "../../componets/drag";
 
 const greatVibes = Great_Vibes({
   subsets: ['latin'],
