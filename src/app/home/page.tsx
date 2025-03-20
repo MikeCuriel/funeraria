@@ -3,7 +3,7 @@
 import { toPng } from "html-to-image";
 import { useState } from "react";
 import {Great_Vibes, Didact_Gothic} from 'next/font/google';
-// import {DragDrop} from "../../componets/drag";
+
 
 const greatVibes = Great_Vibes({
   subsets: ['latin'],
@@ -102,8 +102,7 @@ const exportToPng = () => {
                 <div className="bg-gray-100 p-4 h-full rounded-xl m-0 flex flex-col">
                     <h2 className="flex justify-center items-center text-xl font-bold">Información</h2>
                     <div className="flex flex-col">
-                        <label className="block text-lg font-medium text-black text-left">Imagen</label>
-                        {/* <DragDrop onChange={handleImageUpload}/> */}
+                        <label className="block text-lg font-medium text-black text-left">Imagen</label>                      
                         <input type="file" className="block w-full mb-4 rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-gray-400" onChange={handleImageUpload}/>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-6">
