@@ -3,6 +3,7 @@
 import { toPng } from "html-to-image";
 import { useState } from "react";
 import {Great_Vibes, Didact_Gothic} from 'next/font/google';
+import {DragDrop} from "../../componets/drag";
 
 const greatVibes = Great_Vibes({
   subsets: ['latin'],
@@ -45,13 +46,13 @@ const exportToPng = () => {
         "/images/img5.png"
     ];
 
-    const [name, setName] = useState("");
-    const [apellido, setApellido] = useState("");
-    const [nacimiento, setNacimiento] = useState("");
-    const [fallecimiento, setFallecimiento] = useState("");
-    const [iglesia, setIglesia] = useState("");
-    const [velorio, setVelorio] = useState("");
-    const [mensaje, setMensaje] = useState("");
+    const [name, setName] = useState("Fulanito");
+    const [apellido, setApellido] = useState("Perez Maldonado");
+    const [nacimiento, setNacimiento] = useState("1968-03-19");
+    const [fallecimiento, setFallecimiento] = useState("2025-03-20");
+    const [iglesia, setIglesia] = useState("Misa en su honor Parroquia de San Juan Bosco calle cualquiera #cualquier, Col. cualquiera, Guadalajara, Jal.");
+    const [velorio, setVelorio] = useState("Su cuerpo sera velado el día de hoy 11 de mayo en la funeraria San Ramón Casa Funeral a las 15:00");
+    const [mensaje, setMensaje] = useState("Aunque la partida duele, sabemos que su legado de amor y esperanza perdurará en cada vida que tocó. La ausencia física nunca podrá apagar la luz de su espíritu, que sigue brillando en el corazón de todos los que lo amaron.");
     const [darkMode, setDarkMode] = useState("text-white");
     const [selectedImage, setSelectedImage] = useState(defaultImages[0]);
     const [imageSelect, setImageSelect] = useState(defaultImages[0]);
@@ -102,6 +103,7 @@ const exportToPng = () => {
                     <h2 className="flex justify-center items-center text-xl font-bold">Información</h2>
                     <div className="flex flex-col">
                         <label className="block text-lg font-medium text-black text-left">Imagen</label>
+                        {/* <DragDrop onChange={handleImageUpload}/> */}
                         <input type="file" className="block w-full mb-4 rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-gray-400" onChange={handleImageUpload}/>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-6">
@@ -109,13 +111,13 @@ const exportToPng = () => {
                         <div className="sm:col-span-3">
                             <label className="block font-medium text-gray-900 text-lg">Nombres</label>
                             <div className="mt-2">
-                                <input type="text" className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setName(e.target.value)}/>
+                                <input type="text" value={name} className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setName(e.target.value)}/>
                             </div>
                         </div>
                         <div className="sm:col-span-3">
                             <label className="block font-medium text-gray-900 text-lg">Apellidos</label>
                             <div className="mt-2">
-                                <input type="text" name="first-name" id="first-name" className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setApellido(e.target.value)}/>
+                                <input type="text" value={apellido} name="first-name" id="first-name" className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setApellido(e.target.value)}/>
                             </div>
                         </div>
                     </div>
@@ -124,13 +126,13 @@ const exportToPng = () => {
                         <div className="sm:col-span-3">
                             <label className="block text-lg font-medium text-gray-900">Nacimiento</label>
                             <div className="mt-2">
-                                <input type="date" name="first-name" id="first-name" className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setNacimiento(e.target.value)}/>
+                                <input type="date" value={nacimiento} name="first-name" id="first-name" className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setNacimiento(e.target.value)}/>
                             </div>
                         </div>
                         <div className="sm:col-span-3">
                             <label className="block text-lg font-medium text-gray-900">Fallecimiento</label>
                             <div className="mt-2">
-                                <input type="date" name="first-name" id="first-name" className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setFallecimiento(e.target.value)}/>
+                                <input type="date" value={fallecimiento} name="first-name" id="first-name" className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setFallecimiento(e.target.value)}/>
                             </div>
                         </div>
                     </div>
@@ -139,7 +141,7 @@ const exportToPng = () => {
                         <div className="sm:col-span-3">
                             <label className="block font-medium text-gray-900 text-lg">Iglesia</label>
                             <div className="mt-2">
-                                <input type="text" className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setIglesia(e.target.value)}/>
+                                <input type="text" value={iglesia} className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setIglesia(e.target.value)}/>
                             </div>
                         </div>
                     </div>
@@ -148,14 +150,14 @@ const exportToPng = () => {
                         <div className="sm:col-span-3">
                             <label className="block font-medium text-gray-900 text-lg">Velorio</label>
                             <div className="mt-2">
-                                <input type="text" className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setVelorio(e.target.value)}/>
+                                <input type="text" value={velorio} className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setVelorio(e.target.value)}/>
                             </div>
                         </div>
                     </div>
                     <div className="mt-2 col-span-full">
                         <label className="block text-lg font-medium text-gray-900">Mensaje emotivo</label>
                         <div className="mt-2">
-                            <textarea className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setMensaje(e.target.value)}></textarea>
+                            <textarea value={mensaje} className="block h-24 w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" onChange={(e) => setMensaje(e.target.value)}></textarea>
                         </div>                        
                     </div>
                     <div className="flex space-x-2.5 mt-4 justify-center items-center">
@@ -183,13 +185,13 @@ const exportToPng = () => {
                                 <h1 className={`text-sm h-full items-end text-center`}>{nacimiento} - {fallecimiento}</h1>
                             </div>
                             <div className={`${darkMode} row-span-4 w-full h-full flex items-start justify-center text-white px-52 mt-6`}>
-                                <h1 className={`${didactGothic.className} ${darkMode} text-base text-center mt-2`}>{mensaje}</h1>
+                                <h1 className={`${didactGothic.className} ${darkMode} text-base text-center mt-2 ml-1.5 mr-1.5`}>{mensaje}</h1>
                             </div>
                             <div className="row-span-3 h-full w-full flex px-52 mt-3">
-                                <div className={`${darkMode} h-full w-full`}>
+                                <div className={`${darkMode} h-full w-full ml-3 mr-3`}>
                                     <h2 className={`${darkMode} text-center text-xs`}>{iglesia}</h2>
                                 </div>
-                                <div className={`${darkMode} h-full w-full`}>
+                                <div className={`${darkMode} h-full w-full ml-3 mr-3`}>
                                     <h2 className={`${darkMode} text-center text-xs`}>{velorio}</h2>
                                 </div>
                             </div>                    
