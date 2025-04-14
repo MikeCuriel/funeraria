@@ -4,6 +4,7 @@ import { toPng } from 'html-to-image'
 import { useState } from 'react'
 import { Great_Vibes, Didact_Gothic } from 'next/font/google'
 import { supabase } from '../../services/dbConnection' // ajusta la ruta si es diferente
+import Image from 'next/image'
 
 const greatVibes = Great_Vibes({ subsets: ['latin'], weight: ['400'] })
 const didactGothic = Didact_Gothic({ subsets: ['latin'], weight: ['400'] })
@@ -69,8 +70,6 @@ export const HomeApp = () => {
   const [apellido, setApellido] = useState("Perez Maldonado")
   const [nacimiento, setNacimiento] = useState("1968-03-19")
   const [fallecimiento, setFallecimiento] = useState("2025-03-20")
-  const [velorio, setVelorio] = useState("Su cuerpo será velado...")
-  const [mensaje, setMensaje] = useState("Aunque la partida duele...")
   const [darkMode, setDarkMode] = useState("text-black")
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedImage, setSelectedImage] = useState(defaultImages[0])
@@ -103,21 +102,21 @@ export const HomeApp = () => {
     }
   }
 
-  const exportToPng = () => {
-    const node = document.getElementById("html-element-id")
-    if (!node) return console.error("El elemento no existe.")
-      toPng(node, {
-        width: 720,
-        height: 1280
-      })
-      .then(dataUrl => {
-        const link = document.createElement("a")
-        link.href = dataUrl
-        link.download = "exported-image.png"
-        link.click()
-      })
-      .catch(err => console.error("Error al exportar imagen:", err))
-  }
+  // const exportToPng = () => {
+  //   const node = document.getElementById("html-element-id")
+  //   if (!node) return console.error("El elemento no existe.")
+  //     toPng(node, {
+  //       width: 720,
+  //       height: 1280
+  //     })
+  //     .then(dataUrl => {
+  //       const link = document.createElement("a")
+  //       link.href = dataUrl
+  //       link.download = "exported-image.png"
+  //       link.click()
+  //     })
+  //     .catch(err => console.error("Error al exportar imagen:", err))
+  // }
 
   const getMensajeDespedida = () => {
     const date = new Date(fechaDespedida)
@@ -136,7 +135,7 @@ export const HomeApp = () => {
       const dataUrl = await toPng(node, { width: 1080, height: 1920 })
       const filename = `despedida_${Date.now()}.png`
       const imageUrl = await uploadImageToSupabase(dataUrl, filename)
-      const viewerUrl = `https://tusitio.com/ver/img?url=${encodeURIComponent(imageUrl)}`
+      const viewerUrl = `https://funeraria-jade.vercel.app//ver/img?url=${encodeURIComponent(imageUrl)}`
   
       const mensaje = `🕊️ EN MEMORIA DE ${name} ${apellido}\n\n${getMensajeDespedida()}\n\n📎 Ver imagen: ${viewerUrl}\n📍 Ubicación: https://www.google.com/maps/search/${encodeURIComponent(iglesia)}`
 
@@ -172,7 +171,17 @@ export const HomeApp = () => {
                 <label className="block text-sm font-medium text-gray-900">Funeraria</label>
                 <select
                 value={iglesia}
-                onChange={(e) => setIglesia(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setIglesia(value)
+                
+                  // Detectar qué imagen usar según el texto
+                  if (value.startsWith("San Ramón Casa Funeral")) {
+                    setFuneraria(recintoImages[0])
+                  } else if (value.startsWith("Funeral Guadalupe")) {
+                    setFuneraria(recintoImages[1])
+                  }
+                }}
                 className="mt-1 block w-full rounded-md bg-white px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500"
                 >
                 <optgroup label="San Ramón Casa Funeral">
@@ -220,11 +229,17 @@ export const HomeApp = () => {
       <div className="lg:w-4/6 w-full p-4">
         <div className="rounded-xl h-full flex justify-center items-center relative">
           <div id="html-element-id" className="relative w-full h-full">
-            <img src={selectedImage} className="w-full h-full object-contain rounded-md" />
+          <Image
+            src={selectedImage}
+            alt="Imagen de fondo"
+            width={1080}
+            height={1920}
+            className="w-full h-full object-contain rounded-md"
+          />
 
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="flex flex-col items-center justify-center text-center space-y-4 w-full max-w-[700px] px-4 lg:pt-22 xl:pt-20 xl:px-15">
-                <h3 className={`${darkMode} text-black text-xl lg:mx-20`}>
+                <h3 className={`${darkMode} ${didactGothic.className} text-black text-xl lg:mx-20`}>
                   CON PROFUNDA TRISTEZA ANUNCIAMOS EL FALLECIMIENTO DE
                 </h3>
 
@@ -233,17 +248,30 @@ export const HomeApp = () => {
                 </h1>
 
                 <div className="w-84 h-84 rounded-full overflow-hidden shadow-lg xl:w-72 xl:h-72">
-                  <img src={imageSelect} className="w-full h-full object-cover" />
+                  <Image
+                    src={imageSelect}
+                    alt="Imagen del difunto"
+                    width={200}
+                    height={200}
+                    className="w-full h-full object-cover"
+                  />
+
                 </div>
 
                 <p className={`${darkMode} text-sm`}>{nacimiento} - {fallecimiento}</p>
 
-                <p className={`${darkMode} w-full text-center uppercase lg:text-xl lg:px-15 xl:text-base `}>
+                <p className={`${darkMode} ${didactGothic.className} w-full text-center uppercase lg:text-xl lg:px-15 xl:text-base `}>
                     {getMensajeDespedida()}
                 </p>
 
                 <div className="w-32 h-32">
-                    <img src={imageFuneraria} className="w-full h-full object-contain" />
+                  <Image
+                    src={imageFuneraria}
+                    alt="Logo funeraria"
+                    width={150}
+                    height={150}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
 
               </div>

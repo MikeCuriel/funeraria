@@ -18,7 +18,13 @@ const TestUpload = () => {
     ctx.fillStyle = "#3B82F6";
     ctx.fillRect(0, 0, 300, 300);
 
-    const blob: Blob = await new Promise((resolve) => canvas.toBlob(resolve as any, "image/png"));
+    const blob: Blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob)
+          else reject(new Error("No se pudo generar el blob"))
+        }, "image/png")
+      })
+      
 
     const filename = `prueba_${Date.now()}.png`;
 
