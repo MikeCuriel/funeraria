@@ -11,9 +11,6 @@ const didactGothic = Didact_Gothic({ subsets: ['latin'], weight: ['400'] })
 
 const defaultImages = [
   "/images/img.png",
-  "/images/img1.png",
-  "/images/img2.png",
-  "/images/img3.png",
   "/images/img4.png",
   "/images/img5.png"
 ]
@@ -238,16 +235,16 @@ export const HomeApp = () => {
           />
 
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex flex-col items-center justify-center text-center space-y-4 w-full max-w-[700px] px-4 lg:pt-22 xl:pt-20 xl:px-15">
-                <h3 className={`${darkMode} ${didactGothic.className} text-black text-xl lg:mx-20`}>
+              <div className="flex flex-col items-center justify-center text-center space-y-4 w-full max-w-[700px] px-4 pt-20 md:pt-40 lg:pt-30 xl:pt-20 xl:px-15">
+                <h3 className={`${darkMode} ${didactGothic.className} text-black text-base md:text-4xl lg:mx-20 lg:text-2xl`}>
                   CON PROFUNDA TRISTEZA ANUNCIAMOS EL FALLECIMIENTO DE
                 </h3>
 
-                <h1 className={`${greatVibes.className} ${darkMode} text-7xl`}>
+                <h1 className={`${greatVibes.className} ${darkMode} text-4xl md:text-8xl lg:text-7xl`}>
                   {name} {apellido}
                 </h1>
 
-                <div className="w-84 h-84 rounded-full overflow-hidden shadow-lg xl:w-72 xl:h-72">
+                <div className="w-32 h-32 rounded-full overflow-hidden shadow-lg md:w-96 md:h-96 lg:h-64 lg:w-64 xl:w-72 xl:h-72">
                   <Image
                     src={imageSelect}
                     alt="Imagen del difunto"
@@ -258,13 +255,13 @@ export const HomeApp = () => {
 
                 </div>
 
-                <p className={`${darkMode} text-sm`}>{nacimiento} - {fallecimiento}</p>
+                <p className={`${darkMode} text-sm md:text-lg`}>{nacimiento} - {fallecimiento}</p>
 
-                <p className={`${darkMode} ${didactGothic.className} w-full text-center uppercase lg:text-xl lg:px-15 xl:text-base `}>
+                <p className={`${darkMode} ${didactGothic.className} w-full text-center uppercase text-base md:text-4xl lg:text-xl lg:px-15 xl:text-base `}>
                     {getMensajeDespedida()}
                 </p>
 
-                <div className="w-32 h-32">
+                <div className="w-32 h-32 md:w-56 md:h-56 lg:w-48 lg:h-48">
                   <Image
                     src={imageFuneraria}
                     alt="Logo funeraria"
