@@ -129,7 +129,7 @@ export const HomeApp = () => {
     if (!node) return console.error("El elemento no existe.")
   
     try {
-      const dataUrl = await toPng(node, { width: 1080, height: 1920 })
+      const dataUrl = await toPng(node)
       const filename = `despedida_${Date.now()}.png`
       const imageUrl = await uploadImageToSupabase(dataUrl, filename)
       const viewerUrl = `https://funeraria-jade.vercel.app//ver/img?url=${encodeURIComponent(imageUrl)}`
@@ -235,16 +235,16 @@ export const HomeApp = () => {
           />
 
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex flex-col items-center justify-center text-center space-y-4 w-full max-w-[700px] px-4 pt-20 md:pt-40 lg:pt-30 xl:pt-20 xl:px-15">
-                <h3 className={`${darkMode} ${didactGothic.className} text-black text-base md:text-4xl lg:mx-20 lg:text-2xl`}>
+              <div className="flex flex-col items-center justify-center text-center space-y-4 w-full max-w-[700px] px-4 pt-20 md:pt-40 lg:pt-30 xl:pt-30 xl:px-12 2xl:px-9">
+                <h3 className={`${darkMode} ${didactGothic.className} text-black text-xs md:text-4xl lg:mx-30 lg:text-base 2xl:text-xl`}>
                   CON PROFUNDA TRISTEZA ANUNCIAMOS EL FALLECIMIENTO DE
                 </h3>
 
-                <h1 className={`${greatVibes.className} ${darkMode} text-4xl md:text-8xl lg:text-7xl`}>
+                <h1 className={`${greatVibes.className} ${darkMode} text-3xl md:text-8xl lg:text-6xl lg:px-8 2xl:text-7xl`}>
                   {name} {apellido}
                 </h1>
 
-                <div className="w-32 h-32 rounded-full overflow-hidden shadow-lg md:w-96 md:h-96 lg:h-64 lg:w-64 xl:w-72 xl:h-72">
+                <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg md:w-96 md:h-96 lg:h-48 lg:w-48 xl:w-48 xl:h-48 2xl:w-84 2xl:h-84">
                   <Image
                     src={imageSelect}
                     alt="Imagen del difunto"
@@ -255,13 +255,13 @@ export const HomeApp = () => {
 
                 </div>
 
-                <p className={`${darkMode} text-sm md:text-lg`}>{nacimiento} - {fallecimiento}</p>
+                <p className={`${darkMode} text-sm md:text-lg 2xl:text-xl`}>{nacimiento} - {fallecimiento}</p>
 
-                <p className={`${darkMode} ${didactGothic.className} w-full text-center uppercase text-base md:text-4xl lg:text-xl lg:px-15 xl:text-base `}>
+                <p className={`${darkMode} ${didactGothic.className} w-full text-center uppercase text-xs md:text-4xl lg:text-base lg:px-27 2xl:text-xl `}>
                     {getMensajeDespedida()}
                 </p>
 
-                <div className="w-32 h-32 md:w-56 md:h-56 lg:w-48 lg:h-48">
+                <div className="w-24 h-24 md:w-56 md:h-56 lg:w-38 lg:h-38 2xl:w-52 2xl:h-52">
                   <Image
                     src={imageFuneraria}
                     alt="Logo funeraria"

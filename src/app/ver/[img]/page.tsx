@@ -7,6 +7,7 @@ import Image from 'next/image'
 const VerImagen = () => {
   const searchParams = useSearchParams()
   const imgUrl = searchParams.get('url')
+  console.log(imgUrl);
 
   if (!imgUrl) {
     return (
@@ -17,16 +18,17 @@ const VerImagen = () => {
   }
 
   return ( 
-      <div className="w-full h-full shadow-md rounded-lg overflow-hidden border bg-white">
+    <div className='w-full h-full flex justify-center '>
+      <div className='object-cover'>
         <Image
-          src={imgUrl ?? ''}
-          alt="Imagen de despedida"
-          width={1080}
-          height={1920}
-          className="w-full h-auto object-contain"
-          unoptimized
-        />
+        className='px-1 md:px-40 lg:px-70 xl:px-160' 
+              src={imgUrl ?? ''}
+              alt="Imagen de despedida"
+              fill
+            />
       </div>
+
+    </div>
   )
 }
 
