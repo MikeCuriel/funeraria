@@ -142,7 +142,6 @@ export const HomeApp = () => {
     }
   }
   
-
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full">
       {/* FORMULARIO */}
@@ -225,7 +224,7 @@ export const HomeApp = () => {
       {/* VISTA PREVIA */}
       <div className="lg:w-4/6 w-full p-4">
         <div className="rounded-xl h-full flex justify-center items-center relative">
-          <div id="html-element-id" className="relative w-full h-full">
+          <div id="html-element-id" className="relative w-full h-full 2xl:h-[880px]">
           <Image
             src={selectedImage}
             alt="Imagen de fondo"
@@ -244,7 +243,7 @@ export const HomeApp = () => {
                   {name} {apellido}
                 </h1>
 
-                <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg md:w-96 md:h-96 lg:h-48 lg:w-48 xl:w-48 xl:h-48 2xl:w-84 2xl:h-84">
+                <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg md:w-96 md:h-96 lg:h-48 lg:w-48 xl:w-48 xl:h-48 2xl:w-58 2xl:h-58">
                   <Image
                     src={imageSelect}
                     alt="Imagen del difunto"
@@ -261,7 +260,7 @@ export const HomeApp = () => {
                     {getMensajeDespedida()}
                 </p>
 
-                <div className="w-24 h-24 md:w-56 md:h-56 lg:w-38 lg:h-38 2xl:w-52 2xl:h-52">
+                <div className="w-24 h-24 md:w-56 md:h-56 lg:w-38 lg:h-38 2xl:w-42 2xl:h-42">
                   <Image
                     src={imageFuneraria}
                     alt="Logo funeraria"
