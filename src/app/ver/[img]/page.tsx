@@ -21,7 +21,7 @@ const VerImagen = () => {
     <div className='w-full h-full flex justify-center '>
       <div className='object-cover'>
         <Image
-        className='px-1 md:px-40 lg:px-60 xl:px-80' 
+        className='md:px-40 lg:px-60 xl:px-80' 
               src={imgUrl ?? ''}
               alt="Imagen de despedida"
               fill

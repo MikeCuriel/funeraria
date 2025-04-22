@@ -73,8 +73,10 @@ export const HomeApp = () => {
   const [imageSelect, setImageSelect] = useState(defaultImages[0])
   const [imageFuneraria, setFuneraria] = useState(recintoImages[0])
   const [iglesia, setIglesia] = useState("San Ramón Casa Funeral - La Piedad")
-    const [fechaDespedida, setFechaDespedida] = useState("2025-04-15")
-    const [horaDespedida, setHoraDespedida] = useState("15:00")
+  const [fechaDespedida, setFechaDespedida] = useState("2025-04-15")
+  const [horaDespedida, setHoraDespedida] = useState("15:00")
+  const [loading, setLoading] = useState(false)
+  const [isImageLoaded, setIsImageLoaded] = useState(false)
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -87,9 +89,9 @@ export const HomeApp = () => {
       setCurrentIndex(nextIndex)
       setSelectedImage(defaultImages[nextIndex])
       setDarkMode(nextIndex < 0 ? "text-white" : "text-black")
+      setIsImageLoaded(false) // reset para que vuelva a cargar
     }
   }
-
   const handlePrev = () => {
     if (currentIndex > 0) {
       const prevIndex = currentIndex - 1
@@ -125,8 +127,19 @@ export const HomeApp = () => {
   }
   
   const handleSendWhatsapp = async () => {
+    setLoading(true)
+  
+    // Esperamos que la imagen de fondo esté cargada
+    if (!isImageLoaded) {
+      console.log("Esperando que la imagen termine de cargar...")
+      await new Promise(resolve => setTimeout(resolve, 300))
+    }
+  
     const node = document.getElementById("html-element-id")
-    if (!node) return console.error("El elemento no existe.")
+    if (!node) {
+      setLoading(false)
+      return console.error("El elemento no existe.")
+    }
   
     try {
       const dataUrl = await toPng(node)
@@ -135,13 +148,15 @@ export const HomeApp = () => {
       const viewerUrl = `https://funeraria-jade.vercel.app//ver/img?url=${encodeURIComponent(imageUrl)}`
   
       const mensaje = `🕊️ EN MEMORIA DE ${name} ${apellido}\n\n${getMensajeDespedida()}\n\n📎 Ver imagen: ${viewerUrl}\n📍 Ubicación: https://www.google.com/maps/search/${encodeURIComponent(iglesia)}`
-
+  
       window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, "_blank")
     } catch (error) {
       console.error("Error al generar imagen o subir a Supabase:", error)
     }
-  }
   
+    setLoading(false)
+  }
+
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full">
       {/* FORMULARIO */}
@@ -215,7 +230,23 @@ export const HomeApp = () => {
 
           <div className="flex justify-center items-center space-x-3 mt-6">
             <button onClick={handlePrev} disabled={currentIndex === 0} className="btn">⪻ Anterior</button>
-            <button onClick={handleSendWhatsapp} className="btn bg-green-500 hover:bg-green-600 text-white">Guardar y Enviar por WhatsApp</button>
+            <button
+              onClick={handleSendWhatsapp}
+              className="btn bg-green-500 hover:bg-green-600 text-white flex items-center justify-center"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                  Enviando...
+                </>
+              ) : (
+                'Guardar y Enviar por WhatsApp'
+              )}
+            </button>
             <button onClick={handleNext} className="btn">Siguiente ⪼</button>
           </div>
         </div>
@@ -225,12 +256,11 @@ export const HomeApp = () => {
       <div className="lg:w-4/6 w-full p-4">
         <div className="rounded-xl h-full flex justify-center items-center relative">
           <div id="html-element-id" className="relative w-full h-full 2xl:h-[880px]">
-          <Image
+          <img
             src={selectedImage}
             alt="Imagen de fondo"
-            width={1080}
-            height={1920}
             className="w-full h-full object-contain rounded-md"
+            onLoad={() => setIsImageLoaded(true)}
           />
 
             <div className="absolute inset-0 flex items-center justify-center">
