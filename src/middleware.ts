@@ -4,10 +4,7 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const auth = request.cookies.get('auth_funeraria')?.value
 
-  const protectedRoutes = ['/', '/home', '/memoriales', '/contenido']
-  const isProtected = protectedRoutes.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  )
+  const isProtected = request.nextUrl.pathname.match(/^\/($|home|memoriales|contenido)/)
 
   if (isProtected && auth !== 'true') {
     return NextResponse.redirect(new URL('/login', request.url))
