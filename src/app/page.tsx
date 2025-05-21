@@ -1,9 +1,9 @@
-import {HomeApp} from "../app/home/page"
+import MemorialesPage from "./memoriales/page";
 
 export default function Home() {
   return(
     <div className="bg-black">
-      <HomeApp/>
+      <MemorialesPage/>
     </div>
   );
 
