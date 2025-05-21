@@ -1,15 +1,13 @@
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   const { clave } = await req.json()
-  const PASSWORD = process.env.CLAVE_FUNERARIA || 'Guadalupe25!'
+  const PASSWORD = process.env.CLAVE_FUNERARIA || 'memorial123'
 
   if (clave === PASSWORD) {
-    // Establecer cookie manualmente con cookies()
-    cookies().set({
-      name: 'auth_funeraria',
-      value: 'true',
+    const res = NextResponse.json({ success: true })
+
+    res.cookies.set('auth_funeraria', 'true', {
       httpOnly: true,
       path: '/',
       maxAge: 60 * 60 * 24, // 1 día
@@ -17,7 +15,7 @@ export async function POST(req: Request) {
       secure: process.env.NODE_ENV === 'production',
     })
 
-    return NextResponse.json({ success: true })
+    return res
   }
 
   return new NextResponse('Unauthorized', { status: 401 })
