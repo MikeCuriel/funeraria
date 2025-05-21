@@ -9,17 +9,23 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const router = useRouter()
 
-  const contraseñaCorrecta = '#Guadalupe25' // Cámbiala según lo necesario
 
-  const handleLogin = () => {
-    if (clave === contraseñaCorrecta) {
-        // Establecer cookie válida por 1 hora     
-        document.cookie = `auth_funeraria=true; path=/; max-age=3600, samesite=lax`
-        router.push('/memoriales')
+  const handleLogin = async () => {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ clave }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (res.ok) {
+      router.push('/memoriales')
     } else {
       setError('Contraseña incorrecta')
     }
   }
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">

@@ -31,33 +31,19 @@ export default function MemorialesPage() {
   const [memoriales, setMemoriales] = useState<Memorial[]>([])
   const [openModal, setOpenModal] = useState(false)
   const [selectedMemorial, setSelectedMemorial] = useState<Memorial | null>(null)
-  const [verificado, setVerificado] = useState(false)
 
-  useEffect(() => {
-    const auth = document.cookie.includes('auth_funeraria=true')
-    if (!auth) {
-      window.location.href = '/login'
-    } else {
-      setVerificado(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!verificado) return
-    const cargarMemoriales = async () => {
-      const { data, error } = await supabase
+useEffect(() => {
+  const cargarMemoriales = async () => {
+    const { data, error } = await supabase
       .from('memorial')
       .select('id, nombre, celular, imagen_url')
       .order('id', { ascending: false })
-    
-    if (!error && data) setMemoriales(data)
-    }
-    cargarMemoriales()
-  }, [verificado])
 
-  if (!verificado) {
-    return <div className="text-center p-10 text-gray-500">Verificando acceso...</div>
+    if (!error && data) setMemoriales(data)
   }
+
+  cargarMemoriales()
+}, [])
 
   const eliminarMemorial = async (id: string) => {
     await supabase.from('memorial').delete().eq('id', id)
