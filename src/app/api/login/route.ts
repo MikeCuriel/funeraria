@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   const { clave } = await req.json()
-  const PASSWORD = process.env.CLAVE_FUNERARIA || 'memorial123'
+  const PASSWORD = process.env.CLAVE_FUNERARIA || 'Guadalupe25!'
 
   if (clave === PASSWORD) {
     const res = NextResponse.json({ success: true })
