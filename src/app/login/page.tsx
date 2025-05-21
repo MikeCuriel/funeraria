@@ -14,7 +14,7 @@ export default function LoginPage() {
   const handleLogin = () => {
     if (clave === contraseñaCorrecta) {
         // Establecer cookie válida por 1 hora     
-        document.cookie = `auth_funeraria=true; path=/; max-age=3600`
+        document.cookie = `auth_funeraria=true; path=/; max-age=3600, samesite=lax`
         router.push('/memoriales')
     } else {
       setError('Contraseña incorrecta')
