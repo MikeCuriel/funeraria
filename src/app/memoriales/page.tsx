@@ -69,7 +69,7 @@ useEffect(() => {
             <Typography variant="h5" className="font-bold text-gray-800">
               Memoriales Generados
             </Typography>
-            <Button variant="contained" color="primary" href="/home">
+            <Button variant="contained" color="primary" href="/SanRamon">
               Nuevo Memorial
             </Button>
           </div>

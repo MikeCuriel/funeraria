@@ -256,7 +256,7 @@ export const HomeApp = () => {
       <div className="lg:w-4/6 w-full p-4">
         <div className="rounded-xl h-full flex justify-center items-center relative">
           <div id="html-element-id" className="relative w-full h-full 2xl:h-[880px]">
-          <img
+          <Image
             src={selectedImage}
             alt="Imagen de fondo"
             className="w-full h-full object-contain rounded-md"
