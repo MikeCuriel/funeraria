@@ -271,7 +271,7 @@ const handleGuardar = async () => {
               <Frame>
                 <Element is={Container} canvas alignItems="center" background={{ r: 0, g: 0, b: 0, a: 0 }}>
                   <Text text="CON PROFUNDA TRISTEZA ANUNCIAMOS EL FALLECIMIENTO DE" textAlign="center" fontSize={"20"} fontWeight={"Medium"} />
-                  <Text text={name} textAlign="center" fontSize={"50"} fontWeight={"Bold"} onCommit={(val) => setName(val)}/>
+                  <Text text={name} textAlign="center" fontSize={"50"} fontWeight={"Bold"} onTextChange={setName}/>
                   <CraftImage src="../images/luto.png" alt="Foto del difunto" width="280px" height="280px" objectFit="contain" radius={50} shadow={2}/>
                   <Text text="18/03/2025 + 18/03/2025" textAlign="center"/>
                   <MemorialMessage
