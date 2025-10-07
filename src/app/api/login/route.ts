@@ -2,21 +2,42 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   const { clave } = await req.json()
-  const PASSWORD = process.env.CLAVE_FUNERARIA || 'Guadalupe25!'
 
-  if (clave === PASSWORD) {
-    const res = NextResponse.json({ success: true })
+  const passGuadalupe = process.env.CLAVE_FUNERARIA_GUADALUPE || 'Guadalupe25!'
+  const passRamon = process.env.CLAVE_FUNERARIA_RAMON || 'Ramon25!'
 
-    res.cookies.set('auth_funeraria', 'true', {
-      httpOnly: true,
-      path: '/',
-      maxAge: 60 * 60 * 24, // 1 día
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    })
+  let isGuadalupe: boolean | null = null
 
-    return res
+  if (clave === passGuadalupe) {
+    isGuadalupe = true
+  } else if (clave === passRamon) {
+    isGuadalupe = false
   }
 
-  return new NextResponse('Unauthorized', { status: 401 })
+  if (isGuadalupe === null) {
+    return new NextResponse('Unauthorized', { status: 401 })
+  }
+
+  const res = NextResponse.json({
+    success: true,
+    isGuadalupe,
+  })
+
+  res.cookies.set('auth_funeraria', "true", {
+    httpOnly: true,
+    path: '/',
+    maxAge: 60 * 60 * 24,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  })
+
+  // Aquí guardamos si es Guadalupe o Ramón
+  res.cookies.set('isGuadalupe', String(isGuadalupe), {
+    path: '/',
+    maxAge: 60 * 60 * 24,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  })
+
+  return res
 }

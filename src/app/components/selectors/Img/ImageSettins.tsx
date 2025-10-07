@@ -60,8 +60,8 @@ export const ImageSettings: React.FC = () => {
         propKeys={["width", "height"] as const}
         summary={({ width, height }) => `${width ?? "auto"} × ${height ?? "auto"}`}
       >
-        <ToolbarItem propKey="width"  type="text" label="Width (px, %, etc.)" />
-        <ToolbarItem propKey="height" type="text" label="Height (px, auto…)" />
+        <ToolbarItem propKey="width"  type="text" label="Ancho" />
+        <ToolbarItem propKey="height" type="text" label="Alto"/>
       </ToolbarSection>
 
       <ToolbarSection<ImageNodeProps, "objectFit">
@@ -83,12 +83,18 @@ export const ImageSettings: React.FC = () => {
         propKeys={["radius", "shadow", "margin"] as const}
         summary={() => null}
       >
-        <ToolbarItem full propKey="radius" type="slider" label="Border radius" />
-        <ToolbarItem full propKey="shadow" type="slider" label="Sombra" />
-        <ToolbarItem propKey="margin" index={0} type="slider" label="Margin Top" />
-        <ToolbarItem propKey="margin" index={1} type="slider" label="Margin Right" />
-        <ToolbarItem propKey="margin" index={2} type="slider" label="Margin Bottom" />
-        <ToolbarItem propKey="margin" index={3} type="slider" label="Margin Left" />
+        <ToolbarItem full propKey="radius" type="slider" label="Borde" />
+      </ToolbarSection>
+
+      <ToolbarSection<ImageNodeProps, "margin">
+        title="Margen"
+        propKeys={["margin"] as const}
+        summary={() => null}
+      >
+        <ToolbarItem propKey="margin" index={0} type="slider" label="Arriba" />
+        <ToolbarItem propKey="margin" index={1} type="slider" label="Derecha" />
+        <ToolbarItem propKey="margin" index={2} type="slider" label="Abajo" />
+        <ToolbarItem propKey="margin" index={3} type="slider" label="Izquierda" />
       </ToolbarSection>
     </>
   );

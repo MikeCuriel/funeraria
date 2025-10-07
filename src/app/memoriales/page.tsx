@@ -19,6 +19,7 @@ import {
 import { supabase } from '../../services/dbConnection'
 import Image from 'next/image'
 import { Visibility } from '@mui/icons-material'
+import Cookies from 'js-cookie'
 
 interface Memorial {
   id: string
@@ -31,19 +32,34 @@ export default function MemorialesPage() {
   const [memoriales, setMemoriales] = useState<Memorial[]>([])
   const [openModal, setOpenModal] = useState(false)
   const [selectedMemorial, setSelectedMemorial] = useState<Memorial | null>(null)
+  const [isGuadalupe, setIsGuadalupe] = useState<boolean | null>(null)
 
-useEffect(() => {
-  const cargarMemoriales = async () => {
-    const { data, error } = await supabase
-      .from('memorial')
-      .select('id, nombre, celular, imagen_url')
-      .order('id', { ascending: false })
+  // 👇 leer cookie al montar el componente
+    useEffect(() => {
+      const raw = Cookies.get('isGuadalupe');    
+      if (raw !== undefined) {
+        setIsGuadalupe(raw === 'true');            
+      } else {
+        setIsGuadalupe(null); 
+      }
+    }, []);
 
-    if (!error && data) setMemoriales(data)
-  }
+  useEffect(() => {
+    if (isGuadalupe === null) return
+    let cancelled = false;
+    const cargarMemoriales = async () => {
+      const { data, error } = await supabase
+        .from('memorial')
+        .select('id, nombre, celular, imagen_url')
+        .eq("bGuadalupe", isGuadalupe)
+        .order('id', { ascending: false })
 
-  cargarMemoriales()
-}, [])
+      if (!cancelled && !error && data) setMemoriales(data);
+    }
+
+  cargarMemoriales();
+  return () => { cancelled = true; };
+}, [isGuadalupe]);
 
   const eliminarMemorial = async (id: string) => {
     await supabase.from('memorial').delete().eq('id', id)

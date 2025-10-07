@@ -1,0 +1,68 @@
+{
+    "contenedor":{
+        "margenContenedorArriba": "100",
+        "margenContenedorDerecha" : "0",
+        "margenContenedorAbajo" : "0",
+        "margenContenedorIzquierda": "0",
+        "paddingContenedorArriba": "0",
+        "paddingContenedorAbajo": "0",
+        "paddingContenedorDerecha": "0",
+        "paddingContenedorIzquierda": "0"        
+    },
+    "titulo":{
+        "text": "CON PROFUNDA TRISTEZA ANUNCIAMOS EL FALLECIMIENTO DE",
+        "margenTituloArriba": 12,
+        "margenTituloAbajo" : 12,
+        "margenTituloDerecha" : 0,
+        "margenTituloIzquierda": 0,
+        "fontTitulo": 24,
+        "fontAlignTitulo": "center",
+        "fontDecorationTitulo": "asdad"
+    },
+    "nombre":{
+        "textNombre" : "FULANITO PEREZ MALDONADO",
+        "margenNombreArriba": 12,
+        "margenNombreAbajo" : 12,
+        "margenNombreDerecha" : 0,
+        "margenNombreIzquierda": 0, 
+        "fontTextNombre": 56,
+        "fontAlignNombre": "Center",
+        "fontDecorationNombre": "Bold"
+    },
+    "imagen":{
+        "defaultImagen": "../images/luto.png",
+        "textoDefault": "Foto",
+        "ImagenAltura": "280px",
+        "ImagenAncho" : "280px",
+        "ajuste" : "contain",
+        "imagenBorder" : 100,
+        "MargenImagenArriba": "12",
+        "MargenImagenDerecha": "0",
+        "MargenImagenAbajo": "12",
+        "MargenImagenIzquierda": "0"
+    },
+    "fecha":{
+        "margenFechaArriba": 12,
+        "margenFechaAbajo" : 12,
+        "margenFechaDerecha" : 0,
+        "margenFechaIzquierda": 0,
+        "fontTextFecha": 20,
+        "fontAlignFecha": "Center",
+        "fontDecorationFecha": "Regular",
+        "textFecha" : "{hoy:dd/MM/yyyy} + {hoy:dd/MM/yyyy}"
+    },
+    "capilla":{
+        "margenCapillaArriba": 12,
+        "margenCapillaAbajo" : 12,
+        "margenCapillaDerecha" : 0,
+        "margenCapillaIzquierda": 0,
+        "fontTextCapilla": 22,
+        "fontAlignCapilla": "Centrado",
+        "fontDecorationCapilla": "Medio"
+    },
+    "imagenLogo":{
+        "tamañoImagenAltura": 200,
+        "tamañoImagenAncho" : 200,
+        "ajuste" : "contain"
+    }
+}

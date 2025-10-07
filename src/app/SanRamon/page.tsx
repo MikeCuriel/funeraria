@@ -12,6 +12,7 @@ import { supabase } from '../../services/dbConnection'
 import { toCanvas } from "html-to-image";
 import { useRouter } from 'next/navigation'
 import {Box, TextField} from '@mui/material';
+import defaults from '../utils/default.json'
 
 const LayersTheme = styled.div<{
   $base?: string;
@@ -37,6 +38,7 @@ const LayersTheme = styled.div<{
   }
 `;
 
+type ObjectFit = NonNullable<React.CSSProperties['objectFit']>
 
 // type Prefs = {
 //   title: string;
@@ -109,9 +111,14 @@ export default function EditorWithLayers() {
   const previewRef = React.useRef<HTMLDivElement | null>(null);
   // const { draft: prefs, setDraft: setPrefs, commit: savePrefs, revert: revertPrefs } =
   //   usePersistentStateManual<Prefs>("prefs:v1", DEFAULTS)
-  const [name, setName] = React.useState("FULANITO PEREZ MALDONADO");
   const [celular, setCelular] = React.useState("");
   const router = useRouter()
+  const [name, setName] = React.useState("FULANITO PEREZ MALDONADO");
+
+  const toObjectFit = (v: string): ObjectFit => {
+  const allowed: ObjectFit[] = ['contain', 'cover', 'fill', 'none', 'scale-down']
+  return allowed.includes(v as ObjectFit) ? (v as ObjectFit) : 'contain'
+}
 
   // (Opcional) recordar última imagen
   React.useEffect(() => {
@@ -229,6 +236,21 @@ const handleGuardar = async () => {
   }
 };
 
+const todayMX = new Intl.DateTimeFormat('es-MX', {
+  timeZone: 'America/Mexico_City',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+}).format(new Date())
+
+const resolveFecha = (v: string) => {
+  if (v?.startsWith('{hoy')) {
+    // único formato dd/MM/yyyy (rápido)
+    return todayMX
+  }
+  return v
+}
+
   return (
     <Editor resolver={{ Text, Container, CraftImage, MemorialMessage }}>
       <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", height: "100vh" }}>
@@ -269,13 +291,62 @@ const handleGuardar = async () => {
           >
             <div style={{ position: "absolute", inset: 0 }}>  
               <Frame>
-                <Element is={Container} canvas alignItems="center" background={{ r: 0, g: 0, b: 0, a: 0 }}>
-                  <Text text="CON PROFUNDA TRISTEZA ANUNCIAMOS EL FALLECIMIENTO DE" textAlign="center" fontSize={"20"} fontWeight={"Medium"} />
-                  <Text text={name} textAlign="center" fontSize={"50"} fontWeight={"Bold"} onTextChange={setName}/>
-                  <CraftImage src="../images/luto.png" alt="Foto del difunto" width="280px" height="280px" objectFit="contain" radius={50} shadow={2}/>
-                  <Text text="18/03/2025 + 18/03/2025" textAlign="center"/>
+                <Element is={Container} canvas alignItems="center" background={{ r: 0, g: 0, b: 0, a: 0 }} 
+                margin={[
+                  defaults.contenedor.margenContenedorArriba, 
+                  defaults.contenedor.margenContenedorDerecha, 
+                  defaults.contenedor.margenContenedorAbajo, 
+                  defaults.contenedor.margenContenedorIzquierda
+                ]} 
+                padding={[
+                  defaults.contenedor.paddingContenedorArriba,
+                  defaults.contenedor.paddingContenedorDerecha,
+                  defaults.contenedor.paddingContenedorAbajo,
+                  defaults.contenedor.paddingContenedorIzquierda
+                ]}>
+                  <Text text={defaults.titulo.text} textAlign={defaults.titulo.fontAlignTitulo as "center" | "left" | "right" | "justify"}
+                  fontWeight={defaults.titulo.fontDecorationTitulo}
+                  fontSize={defaults.titulo.fontTitulo} 
+                  margin={[
+                    defaults.titulo.margenTituloArriba, 
+                    defaults.titulo.margenTituloDerecha, 
+                    defaults.titulo.margenTituloAbajo,
+                    defaults.titulo.margenTituloIzquierda
+                  ]}  />
+                  <Text 
+                  text={name} 
+                  onTextChange={setName}
+                  textAlign={defaults.nombre.fontAlignNombre as "center" | "left" | "right" | "justify"} 
+                  fontSize={defaults.nombre.fontTextNombre} 
+                  fontWeight={defaults.nombre.fontDecorationNombre}
+                  />
+                  <CraftImage 
+                  src={defaults.imagen.defaultImagen} 
+                  alt={defaults.imagen.textoDefault} 
+                  width={defaults.imagen.ImagenAncho} 
+                  height={defaults.imagen.ImagenAltura} 
+                  objectFit={toObjectFit(defaults.imagen.ajuste)} 
+                  radius={defaults.imagen.imagenBorder} 
+                  margin={[
+                    defaults.imagen.MargenImagenArriba,
+                    defaults.imagen.MargenImagenDerecha,
+                    defaults.imagen.MargenImagenAbajo,
+                    defaults.imagen.MargenImagenIzquierda
+                  ]}/>
+
+                  <Text text={resolveFecha(defaults.fecha.textFecha) + ' + ' + resolveFecha(defaults.fecha.textFecha)}
+                   textAlign={defaults.fecha.fontAlignFecha as "center" | "left" | "right" | "justify"}
+                   fontSize={defaults.fecha.fontTextFecha}
+                   fontWeight={defaults.fecha.fontDecorationFecha}
+                   margin={[
+                    defaults.fecha.margenFechaArriba,
+                    defaults.fecha.margenFechaDerecha,
+                    defaults.fecha.margenFechaAbajo,
+                    defaults.fecha.margenFechaIzquierda
+                   ]}
+                   />
                   <MemorialMessage
-                    venue="CAPILLA GUADALUPE"
+                    venue="CAPILLA: LA PIEDAD"
                     venueOptions={["CAPILLA: LA PIEDAD", "CAPILLA: RESURRECCION", "CAPILLA: SAGRADO CORAZON", "CAPILLA: GUADALUPANA", "CAPILLA: FATIMA", "CAPILLA: JUAN PABLO II", "CAPILLA: SAN MIGUEL"]}
                     textAlign="center"
                     fontSize={18}
@@ -291,3 +362,5 @@ const handleGuardar = async () => {
     </Editor>
   );
 }
+
+//TODO ME FALTA REVISAR LA FECHA DE FALLECIDO, TENGO UNA SOLA FECHA.

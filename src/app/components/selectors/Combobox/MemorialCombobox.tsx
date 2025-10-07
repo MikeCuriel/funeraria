@@ -30,7 +30,7 @@ export type MemorialMessageProps = {
 const defaultProps: Required<Omit<MemorialMessageProps, "venueOptions">> & {
   venueOptions: string[];
 } = {
-  fontSize: 18,
+  fontSize: 22,
   textAlign: "center",
   fontWeight: 500,
   color: { r: 17, g: 24, b: 39, a: 0.95 },
@@ -164,9 +164,6 @@ export const MemorialMessageSettings: React.FC = () => {
 
   const venues: string[] =
     props.venueOptions ?? defaultProps.venueOptions;
-  const { day, month } = getDayMonth(
-    props.dateISO ?? defaultProps.dateISO
-  );
 
   return (
     <>
@@ -190,9 +187,6 @@ export const MemorialMessageSettings: React.FC = () => {
               })
             }
           />
-          <p className="mt-1 text-[11px] text-gray-500">
-            Renderiza: <strong>{day}</strong> DE <strong>{month}</strong>
-          </p>
         </div>
 
         {/* Hora */}
