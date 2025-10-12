@@ -106,15 +106,6 @@ export default function EditorWithLayers() {
   const router = useRouter()
   const [name, setName] = React.useState("FULANITO PEREZ MALDONADO");
 
-// dentro de EditorWithLayers()
-const debounce = React.useCallback((fn: (...a:any[]) => void, ms = 500) => {
-  let t: any;
-  return (...a:any[]) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
-}, []);
-
-const saveDebounced = React.useMemo(() => debounce(save, 600), [debounce, save]);
-
-
   const [fontTextNombre, setFontTextNombre] = React.useState<number | undefined>(undefined);
 
   // Inicializa el estado local con el valor de defaults al cargar

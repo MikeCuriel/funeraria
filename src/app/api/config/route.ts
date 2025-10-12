@@ -26,7 +26,6 @@ function pickNearest(configs: Row[], w: number, h: number, dpr: number) {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const funeraria = (searchParams.get('funeraria') || 'guadalupe').toLowerCase()
   const deviceId = searchParams.get('deviceId') || ''
   const w = Number(searchParams.get('w') || '0')
   const h = Number(searchParams.get('h') || '0')

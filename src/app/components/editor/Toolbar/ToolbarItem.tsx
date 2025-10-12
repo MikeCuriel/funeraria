@@ -21,7 +21,7 @@ export type ToolbarItemProps = {
   label?: string;
   prefix?: React.ReactNode;
   children?: React.ReactNode;
-  onChange?: (value: any) => any;
+  onChange?: (value: Input) => Input;
 };
 
 export const ToolbarItem: React.FC<ToolbarItemProps> = ({
@@ -43,7 +43,7 @@ export const ToolbarItem: React.FC<ToolbarItemProps> = ({
 
   const setValue = (next: Input, delay = 0) => {
     setProp((draft: NodeDraft) => {
-      const v = onChange?.(next as never) ?? next;
+      const v = onChange?.(next) ?? next;
       if (Array.isArray(propValue)) {
         const curr = draft[propKey];
         const arr = Array.isArray(curr) ? [...curr] : [];
@@ -63,7 +63,7 @@ export const ToolbarItem: React.FC<ToolbarItemProps> = ({
             {props.label && <h4 className="text-sm text-light-gray-2">{props.label}</h4>}
             <Slider
               value={Number.isFinite(Number(value)) ? Number(value) : 0}
-              onChange={(_, v) => setValue(v as number, 500)}
+              onChange={(_, v: number | number[]) => setValue(Array.isArray(v) ? v[0] : v, 500)}
               sx={{
                 color: "#3880ff",
                 height: 2,
@@ -79,7 +79,7 @@ export const ToolbarItem: React.FC<ToolbarItemProps> = ({
             {props.label && <h4 className="text-sm text-light-gray-2">{props.label}</h4>}
             <RadioGroup
               value={value ?? ""}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
             >
               {props.children}
             </RadioGroup>

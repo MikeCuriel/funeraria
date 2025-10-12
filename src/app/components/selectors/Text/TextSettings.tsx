@@ -18,15 +18,29 @@ export const TextSettings: React.FC = () => {
   };
 
   // Handler para disparar el callback solo por interacción del usuario
-  const handleFontSizeChange = (value: any) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    if (Number.isFinite(num)) {
-      const node = (window as any).craftjs?.nodes?.Text;
-      if (node && typeof node.props?.onFontSizeChange === 'function') {
-        node.props.onFontSizeChange(num);
+  const handleFontSizeChange = (value: string | number | { r: number; g: number; b: number; a?: number }) => {
+    if (typeof value === 'string' || typeof value === 'number') {
+      const num = typeof value === 'string' ? parseFloat(value) : value;
+      if (Number.isFinite(num)) {
+        // Acceso seguro a window.craftjs.nodes.Text
+        const win = typeof window !== 'undefined' ? window : undefined;
+        const craftjs = (win && 'craftjs' in win) ? (win as Record<string, unknown>).craftjs : undefined;
+    const nodes = craftjs && typeof craftjs === 'object' && 'nodes' in craftjs ? (craftjs as Record<string, unknown>).nodes : undefined;
+        const node = nodes && typeof nodes === 'object' && 'Text' in nodes ? (nodes as Record<string, unknown>).Text : undefined;
+        if (
+          node &&
+          typeof node === 'object' &&
+          'props' in node &&
+          node.props &&
+          typeof (node.props as Record<string, unknown>).onFontSizeChange === 'function'
+        ) {
+          ((node.props as { onFontSizeChange: (n: number) => void }).onFontSizeChange)(num);
+        }
+        return num;
       }
-      return num;
+      return value;
     }
+    // Si es RGBA, simplemente retorna el valor sin modificar
     return value;
   };
 

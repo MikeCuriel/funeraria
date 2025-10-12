@@ -30,7 +30,6 @@ function LoginForm() {
         setError(msg || 'No autorizado');
         return;
       }
-      const data: { success: boolean; isGuadalupe: boolean } = await res.json();
       router.push('/memoriales');
     } catch (err) {
       setError('Error de red o servidor');

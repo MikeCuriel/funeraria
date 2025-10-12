@@ -46,7 +46,12 @@ export const Text: UserComponent<Partial<TextProps>> = (props) => {
   };
 
   const onChange = (e: ContentEditableEvent) => {
-    const html = e.currentTarget?.innerText ?? (e.target as any)?.value ?? "";
+    let html = "";
+    if (e.currentTarget && typeof e.currentTarget.innerText === "string") {
+      html = e.currentTarget.innerText;
+    } else if (e.target && "value" in e.target) {
+      html = (e.target as HTMLInputElement).value ?? "";
+    }
     setProp((draft: Partial<TextProps>) => { draft.text = html; }, 500);
     p.onTextChange?.(html);
   };

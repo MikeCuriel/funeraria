@@ -16,7 +16,6 @@ export default function EditorWithLayers() {
     idx,
     next,
     prev,
-    celular,
     setCelular,
     handleGuardar,
     name,

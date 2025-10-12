@@ -3,18 +3,9 @@ import { Layers } from "@craftjs/layers";
 import { styled } from "styled-components";
 import { Box, TextField } from "@mui/material";
 
-const LayersTheme = styled.div<{
-  $base?: string;
-  $selected?: string;
-}>
-  /* Texto base para todo el panel de Layers */
-  &,
-  & * {
-    color: ${({ $base }) => $base ?? "#ff0000"};
-  }
-  & svg {
-    fill: currentColor;
-  }
+const LayersTheme = styled.div<{ $base?: string; $selected?: string }>`
+  &, & * { color: ${({ $base }) => $base ?? "#ff0000"}; }
+  & svg { fill: currentColor; }
   & .craftjs-layer-item-selected,
   & .craftjs-layer-item.is-selected,
   & [data-selected="true"] {
@@ -41,15 +32,22 @@ export function SanRamonSidebar({ next, prev, setCelular, handleGuardar }: Props
         <Layers expandRootOnLoad />
       </LayersTheme>
       <h4 className="text-black font-bold mt-5">Diseños</h4>
-      <div>
-        <button onClick={next} className="px-3 py-1 rounded bg-white/80 text-black">SIGUIENTE</button>
-        <button onClick={prev} className="px-3 py-1 rounded bg-white/80 text-black">ANTERIOR</button>
+      <div className="flex gap-2 mb-4">
+        <button type="button" onClick={next} className="px-3 py-1 rounded bg-white/80 text-black">SIGUIENTE</button>
+        <button type="button" onClick={prev} className="px-3 py-1 rounded bg-white/80 text-black">ANTERIOR</button>
       </div>
       <div>
         <Box sx={{ width: 500, maxWidth: "80%" }}>
-          <TextField fullWidth label="Celular" id="Celular" onChange={(e) => setCelular(e.target.value)} />
+          <TextField
+            fullWidth
+            label="Celular"
+            id="Celular"
+            type="tel"
+            onChange={(e) => setCelular(e.target.value)}
+            inputProps={{ pattern: "[0-9]*" }}
+          />
         </Box>
-        <button onClick={handleGuardar} className="px-3 py-1 rounded bg-white/80 text-black">GUARDAR</button>
+        <button type="button" onClick={handleGuardar} className="px-3 py-1 rounded bg-white/80 text-black mt-2">GUARDAR</button>
       </div>
     </aside>
   );
