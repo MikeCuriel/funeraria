@@ -20,7 +20,6 @@
         "fontDecorationTitulo": "asdad"
     },
     "nombre":{
-        "textNombre" : "FULANITO PEREZ MALDONADO",
         "margenNombreArriba": 12,
         "margenNombreAbajo" : 12,
         "margenNombreDerecha" : 0,

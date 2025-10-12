@@ -17,6 +17,19 @@ export const TextSettings: React.FC = () => {
     ];
   };
 
+  // Handler para disparar el callback solo por interacción del usuario
+  const handleFontSizeChange = (value: any) => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (Number.isFinite(num)) {
+      const node = (window as any).craftjs?.nodes?.Text;
+      if (node && typeof node.props?.onFontSizeChange === 'function') {
+        node.props.onFontSizeChange(num);
+      }
+      return num;
+    }
+    return value;
+  };
+
   return (
     <>
       <ToolbarSection
@@ -29,7 +42,13 @@ export const TextSettings: React.FC = () => {
           return `${fs}, ${weightDescription(w)}, ${ta}`;
         }}
       >
-        <ToolbarItem full propKey="fontSize" type="slider" label="Tamaño de letra" />
+        <ToolbarItem
+          full
+          propKey="fontSize"
+          type="slider"
+          label="Tamaño de letra"
+          onChange={handleFontSizeChange}
+        />
         <ToolbarItem propKey="textAlign" type="radio" label="Alineacion">
           <ToolbarRadio value="left" label="Izquierda" />
           <ToolbarRadio value="center" label="Centrado" />

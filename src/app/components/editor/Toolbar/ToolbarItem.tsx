@@ -21,7 +21,7 @@ export type ToolbarItemProps = {
   label?: string;
   prefix?: React.ReactNode;
   children?: React.ReactNode;
-  onChange?: (value: ToolbarItemType) => ToolbarItemType;
+  onChange?: (value: any) => any;
 };
 
 export const ToolbarItem: React.FC<ToolbarItemProps> = ({

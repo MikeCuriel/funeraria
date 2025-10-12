@@ -57,7 +57,11 @@ export const ToolbarTextInput: React.FC<ToolbarTextInputProps> = ({
 
   const displayValue = useMemo(() => toRgbaString(value), [value]);
   const [internalValue, setInternalValue] = useState<string>(displayValue);
-  useEffect(() => setInternalValue(displayValue), [displayValue]);
+  // Solo sincroniza el valor interno, nunca dispara el callback aquí
+  useEffect(() => {
+    setInternalValue(displayValue);
+    // Nunca llamar onChange aquí
+  }, [displayValue]);
 
   const openPicker = useCallback((e: React.MouseEvent<HTMLElement>) => {
     if (!isColor) return;

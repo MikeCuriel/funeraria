@@ -15,17 +15,18 @@ export type TextProps = {
   shadow: number;                                // 0..100 (opacidad)
   text: string;
   margin: [number, number, number, number];
-  onTextChange?: (value: string) => void; 
+  onTextChange?: (value: string) => void;
+  onFontSizeChange?: (value:number) => void;
 };
 
-const defaultProps: Required<Omit<TextProps, "onTextChange">> = {
+const defaultProps: Required<Omit<TextProps, 'onTextChange' | 'onFontSizeChange'>> = {
   fontSize: 15,
-  textAlign: "left",
+  textAlign: 'left',
   fontWeight: 500,
   color: { r: 92, g: 90, b: 90, a: 1 },
   margin: [0, 0, 0, 0],
   shadow: 0,
-  text: "Text",
+  text: 'Text',
 };
 
 const toRgba = (c: RGBA) => `rgba(${c.r}, ${c.g}, ${c.b}, ${c.a})`;
@@ -34,28 +35,24 @@ export const Text: UserComponent<Partial<TextProps>> = (props) => {
   const p = { ...defaultProps, ...props };
 
   const {
-    connectors: { connect },         // ✅ desde actions
+    connectors: { connect },
     actions: { setProp },
   } = useNode();
 
-  const { enabled } = useEditor((state) => ({
-    enabled: state.options.enabled,
-  }));
+  const { enabled } = useEditor((state) => ({ enabled: state.options.enabled }));
 
   const attachRef = (el: HTMLElement | null) => {
     if (el) connect(el);
   };
 
   const onChange = (e: ContentEditableEvent) => {
-    // Si quieres texto plano:
-    const html = e.currentTarget?.innerText ?? e.target.value ?? "";
-    // Actualiza el nodo de Craft
-      setProp((draft: Partial<TextProps>) => {
-      draft.text = html;
-    }, 500);
-    // Notifica al padre
+    const html = e.currentTarget?.innerText ?? (e.target as any)?.value ?? "";
+    setProp((draft: Partial<TextProps>) => { draft.text = html; }, 500);
     p.onTextChange?.(html);
   };
+
+  // Elimina el efecto que dispara el callback en renders automáticos.
+  // El callback debe dispararse solo por interacción del usuario (por ejemplo, desde el panel de configuración).
 
   return (
     <ContentEditable
@@ -80,5 +77,5 @@ export const Text: UserComponent<Partial<TextProps>> = (props) => {
 Text.craft = {
   displayName: "Text",
   props: defaultProps,
-  related: { toolbar: TextSettings },
+  related: { toolbar: TextSettings }
 };
