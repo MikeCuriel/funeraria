@@ -106,6 +106,7 @@ export default function EditorWithLayers() {
   const router = useRouter()
   const [name, setName] = React.useState("FULANITO PEREZ MALDONADO");
 
+  const [fontTextTitulo, setFontTextTitulo] = React.useState<number | undefined>(undefined);
   const [fontTextNombre, setFontTextNombre] = React.useState<number | undefined>(undefined);
 
   // Inicializa el estado local con el valor de defaults al cargar
@@ -113,22 +114,40 @@ export default function EditorWithLayers() {
     if (defaults && typeof defaults.nombre.fontTextNombre === 'number') {
       setFontTextNombre(defaults.nombre.fontTextNombre);
     }
+    if(defaults && typeof defaults.titulo.fontTextTitulo === 'number'){
+       setFontTextTitulo(defaults.titulo.fontTextTitulo);
+    }
   }, [defaults]);
 
   // Persiste el cambio solo en un efecto, usando device_id
   React.useEffect(() => {
-    if (fontTextNombre !== undefined && defaults) {
-      const next = { ...defaults, nombre: { ...defaults.nombre, fontTextNombre }, device_id };
-      save(next);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fontTextNombre, device_id]);
+    if (!defaults) return;
+
+    const next = {
+      ...defaults,
+      nombre: {
+        ...defaults.nombre,
+        ...(fontTextNombre !== undefined ? { fontTextNombre } : {}),
+      },
+      titulo: {
+        ...defaults.titulo,
+        ...(fontTextTitulo !== undefined ? { fontTextTitulo } : {}),
+      },
+      ...(device_id !== undefined ? { device_id } : {}),
+    };
+    console.log('Saving config', { next });
+    save(next);
+
+  }, [defaults, fontTextNombre, fontTextTitulo, device_id]);
 
   // Callback para el hijo
   const onChangeFontTextNombre = React.useCallback((value: number) => {
     setFontTextNombre(value);
   }, []);
 
+  const onChangeFontTextTitulo = React.useCallback((value: number) => {
+    setFontTextTitulo(value);
+  }, []);
 
   const toObjectFit = (v: string): ObjectFit => {
   const allowed: ObjectFit[] = ['contain', 'cover', 'fill', 'none', 'scale-down']
@@ -331,7 +350,8 @@ const resolveFecha = (v: string) => {
                 ]}>
                   <Text text={defaults.titulo.text} textAlign={defaults.titulo.fontAlignTitulo as "center" | "left" | "right" | "justify"}
                   fontWeight={defaults.titulo.fontDecorationTitulo}
-                  fontSize={defaults.titulo.fontTitulo} 
+                  onFontSizeChange={onChangeFontTextTitulo}
+                  fontSize={fontTextTitulo ?? defaults.titulo.fontTextTitulo} 
                   margin={[
                     defaults.titulo.margenTituloArriba, 
                     defaults.titulo.margenTituloDerecha, 

@@ -36,6 +36,7 @@ export function useMemorialDefaults(isGuadalupe: boolean | null) {
   }, [isGuadalupe, device]);
 
   const save = useCallback(async (next: DefaultConfig) => {
+    console.log('Saving config', { next });
     if (!device || isGuadalupe === null) return false;
     try {
       const res = await fetch('/api/config', {
@@ -48,8 +49,7 @@ export function useMemorialDefaults(isGuadalupe: boolean | null) {
           config: next,
         }),
       });
-      // Si quieres reflejar localmente tras el commit (sin romper render):
-      // setTimeout(() => setDefaults(next), 0);
+      console.log('Save response', res);
       return res.ok;
     } catch {
       return false;

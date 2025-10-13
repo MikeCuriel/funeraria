@@ -15,9 +15,9 @@
         "margenTituloAbajo" : 12,
         "margenTituloDerecha" : 0,
         "margenTituloIzquierda": 0,
-        "fontTitulo": 24,
+        "fontTextTitulo": 24,
         "fontAlignTitulo": "center",
-        "fontDecorationTitulo": "asdad"
+        "fontDecorationTitulo": "Medium"
     },
     "nombre":{
         "margenNombreArriba": 12,
