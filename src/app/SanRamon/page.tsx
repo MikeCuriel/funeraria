@@ -1,5 +1,51 @@
 "use client";
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "../../services/dbConnection";
+
+const PAGE_SLUG = "ramon";
+
+// arriba del componente
+const DEVICE_ID =
+  typeof window === "undefined"
+    ? "server"
+    : (localStorage.getItem("device_id") ??
+       (() => { const id = crypto.randomUUID(); localStorage.setItem("device_id", id); return id; })());
+
+function useDeviceId() {
+  const [id, setId] = React.useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("device_id");
+    if (stored) {
+      setId(stored);
+    } else {
+      const newId = crypto.randomUUID();
+      localStorage.setItem("device_id", newId);
+      setId(newId);
+    }
+  }, []);
+
+  return id; // null hasta que monte en cliente
+}
+
+function useScreenInfo() {
+  const [screenInfo, setScreenInfo] = useState({ w: 0, h: 0, dpr: 1 });
+
+  useEffect(() => {
+    const update = () =>
+      setScreenInfo({
+        w: window.innerWidth,
+        h: window.innerHeight,
+        dpr: window.devicePixelRatio || 1,
+      });
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  return screenInfo;
+}
 
 /* ─────────────── Utils ─────────────── */
 function useElementSize<T extends HTMLElement>() {
@@ -63,6 +109,13 @@ interface ImageStyle {
   xPct: number; yPct: number; widthPct: number; opacity: number;
   rotation: number; borderRadius: number; flipX: boolean; flipY: boolean;
 }
+type SavedState = {
+  text:   Record<TextKey,string>;
+  styles: Record<TextKey,TextStyle>;
+  boxes:  Record<TextKey,TextBoxPos>;
+  overlaySrc: string | null;
+  imgStyle: ImageStyle;
+};
 
 /* ─────────────── Componentes reutilizables ─────────────── */
 function LabeledSlider({
@@ -83,7 +136,7 @@ function LabeledSlider({
   );
 }
 
-/* --- TextBox: caja editable + drag --- */
+/* --- TextBox --- */
 function TextBox({
   k, text, style, box, selected, area, onSelect, onTextChange, onPosChange,
 }: {
@@ -464,8 +517,10 @@ export default function EditorSanRamon() {
   const [principalRef, principalSize] = useElementSize<HTMLDivElement>();
   const natBg = useImageNaturalSize(bgSrc);
   const drawn = useMemo(() => computeContainRect(principalSize, natBg), [principalSize, natBg]);
+  const deviceId = useDeviceId();
+  const screenInfo = useScreenInfo();
 
-  // Estado de textos
+  // ====== ESTADOS (deben ir ANTES de los effects que los usan)
   const [text, setText] = useState<Record<TextKey, string>>({
     titulo: "Con profunda tristeza nos despedimos de",
     nombre: "Editor San Ramón",
@@ -488,18 +543,87 @@ export default function EditorSanRamon() {
     fecha:  { xPct: 10, yPct: 50, widthPct: 80 },
     capilla:{ xPct: 10, yPct: 64, widthPct: 80 },
   });
-
-  // Imagen overlay
   const [overlaySrc, setOverlaySrc] = useState<string | null>(null);
   const [imgStyle, setImgStyle] = useState<ImageStyle>({
     xPct: 40, yPct: 55, widthPct: 30, opacity: 1, rotation: 0, borderRadius: 0, flipX: false, flipY: false,
   });
-
-  // Selección actual
   const [selectedKey, setSelectedKey] = useState<Key>("titulo");
   const isTextKey = (k: Key): k is TextKey => k !== "imagen";
 
-  // Helpers de actualización
+  // Guardado/rehidratación
+  const hydratingRef = React.useRef(true);
+  const [saveStatus, setSaveStatus] = useState<"idle"|"saving"|"saved"|"error">("idle");
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Rehidratar
+  useEffect(() => {
+    if (!deviceId) return; // espera hasta que exista
+
+    (async () => {
+      const { data: row, error } = await supabase
+        .from("memorial_config")
+        .select("config")
+        .eq("funeraria", PAGE_SLUG)
+        .eq("device_id", deviceId)  // <- usa el hook
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error cargando:", error);
+      } else if (row?.config) {
+        const s = row.config as SavedState;
+        if (s.text)   setText(s.text);
+        if (s.styles) setStyles(s.styles);
+        if (s.boxes)  setBoxes(s.boxes);
+        // if ("overlaySrc" in s) setOverlaySrc(s.overlaySrc);
+        if (s.imgStyle) setImgStyle(s.imgStyle);
+      }
+      hydratingRef.current = false;
+    })();
+
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceId]);
+
+  // Autosave (debounce)
+  useEffect(() => {
+    if (hydratingRef.current || !deviceId) return;
+
+    setSaveStatus("saving");
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+
+    saveTimer.current = setTimeout(async () => {
+      const payload: SavedState = { text, styles, boxes, overlaySrc, imgStyle };
+
+      const { error } = await supabase
+        .from("memorial_config")
+        .upsert(
+          {
+            funeraria: PAGE_SLUG,
+            device_id: deviceId,         // <- string del hook
+            resolution_w: screenInfo.w,
+            resolution_h: screenInfo.h,
+            dpr: screenInfo.dpr,
+            config: payload,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "funeraria,device_id" }
+        );
+
+      if (error) {
+        console.error("Error guardando:", error);
+        setSaveStatus("error");
+      } else {
+        setSaveStatus("saved");
+        setTimeout(() => setSaveStatus("idle"), 1000);
+      }
+    }, 600);
+
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, [text, styles, boxes, overlaySrc, imgStyle, screenInfo, deviceId]);
+
+
+
+  // Helpers actualización
   const setTextByKey = (k: TextKey, v: string) => setText((t) => ({ ...t, [k]: v }));
   const updateStyle = <K extends keyof TextStyle>(k: TextKey, key: K, val: TextStyle[K]) =>
     setStyles((s) => ({ ...s, [k]: { ...s[k], [key]: val } }));
@@ -588,6 +712,13 @@ export default function EditorSanRamon() {
               )}
             </div>
           )}
+
+          {/* Badge de guardado */}
+          <div className="absolute top-2 left-2 bg-white/80 text-[11px] px-2 py-1 rounded shadow">
+            {saveStatus === "saving" ? "Guardando…" :
+            saveStatus === "saved"  ? "Guardado ✓" :
+            saveStatus === "error"  ? "Error al guardar" : null}
+          </div>
 
           {/* Debug */}
           <div className="absolute top-2 right-2 bg-black/60 text-white text-xs rounded px-2 py-1">
