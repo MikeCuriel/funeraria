@@ -3,51 +3,44 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "re
 import { supabase } from "../../services/dbConnection";
 
 const PAGE_SLUG = "ramon";
+const LOGO_SRC = "/images/logoSanRamon.svg"; // asegúrate de que existe
+const CAPILLAS = [
+  "CAPILLA: LA PIEDAD",
+  "CAPILLA: RESURRECCION",
+  "CAPILLA: SAGRADO CORAZON",
+  "CAPILLA: GUADALUPANA",
+  "CAPILLA: FATIMA",
+  "CAPILLA: JUAN PABLO II",
+  "CAPILLA: SAN MIGUEL",
+];
 
-// arriba del componente
-const DEVICE_ID =
-  typeof window === "undefined"
-    ? "server"
-    : (localStorage.getItem("device_id") ??
-       (() => { const id = crypto.randomUUID(); localStorage.setItem("device_id", id); return id; })());
-
+/* ─────────────── Hooks utilitarios ─────────────── */
 function useDeviceId() {
   const [id, setId] = React.useState<string | null>(null);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
     const stored = localStorage.getItem("device_id");
-    if (stored) {
-      setId(stored);
-    } else {
+    if (stored) setId(stored);
+    else {
       const newId = crypto.randomUUID();
       localStorage.setItem("device_id", newId);
       setId(newId);
     }
   }, []);
-
-  return id; // null hasta que monte en cliente
+  return id;
 }
-
 function useScreenInfo() {
   const [screenInfo, setScreenInfo] = useState({ w: 0, h: 0, dpr: 1 });
-
   useEffect(() => {
-    const update = () =>
-      setScreenInfo({
-        w: window.innerWidth,
-        h: window.innerHeight,
-        dpr: window.devicePixelRatio || 1,
-      });
+    const update = () => setScreenInfo({
+      w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio || 1,
+    });
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
-
   return screenInfo;
 }
-
-/* ─────────────── Utils ─────────────── */
 function useElementSize<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -94,7 +87,7 @@ function computeContainRect(
 type TextAlign = "left" | "center" | "right";
 type Weight = 400 | 500 | 600 | 700 | 800;
 type TextKey = "titulo" | "nombre" | "fecha" | "capilla";
-type Key = TextKey | "imagen";
+type Key = TextKey | "imagen" | "logo";
 interface TextStyle {
   fontSize: number;
   color: string;
@@ -115,9 +108,30 @@ type SavedState = {
   boxes:  Record<TextKey,TextBoxPos>;
   overlaySrc: string | null;
   imgStyle: ImageStyle;
+  logoStyle: ImageStyle;           // nuevo: estilo del logo
 };
 
-/* ─────────────── Componentes reutilizables ─────────────── */
+/* ─────────────── Helpers de texto ─────────────── */
+function formatFechaEs(fechaISO: string, horaHM: string) {
+  const [y, m, d] = fechaISO.split("-").map(Number);
+  const [hh, mm] = (horaHM || "00:00").split(":").map(Number);
+  const dt = new Date(y, (m ?? 1) - 1, d ?? 1, hh ?? 0, mm ?? 0);
+  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const dia = dt.getDate();
+  const mes = meses[dt.getMonth()];
+  const time = `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}`;
+  return `${dia} de ${mes} a las ${time}`;
+}
+function construirFraseCapilla({
+  fechaISO, horaHM, lugar, capilla,
+}: { fechaISO: string; horaHM: string; lugar: string; capilla: string; }) {
+  return `AGRADECEMOS LA PRESENCIA DE AMIGOS Y FAMILIARES DURANTE EL ÚLTIMO ADIÓS EL DÍA:
+${formatFechaEs(fechaISO, horaHM)}
+${lugar}
+${capilla}`;
+}
+
+/* ─────────────── UI básicos ─────────────── */
 function LabeledSlider({
   label, min, max, value, onChange, step = 1, unit = ""
 }: { label: string; min: number; max: number; value: number; onChange: (v:number)=>void; step?: number; unit?: string }) {
@@ -136,140 +150,6 @@ function LabeledSlider({
   );
 }
 
-/* --- TextBox --- */
-function TextBox({
-  k, text, style, box, selected, area, onSelect, onTextChange, onPosChange,
-}: {
-  k: TextKey;
-  text: string;
-  style: TextStyle;
-  box: TextBoxPos;
-  selected: boolean;
-  area: AreaSize;
-  onSelect: (k: TextKey) => void;
-  onTextChange: (k: TextKey, v: string) => void;
-  onPosChange: (k: TextKey, patch: Partial<TextBoxPos>) => void;
-}) {
-  const boxRef = useRef<HTMLDivElement>(null);
-  const draggingRef = useRef<{
-    startX: number; startY: number;
-    startLeftPx: number; startTopPx: number;
-    elW: number; elH: number;
-  } | null>(null);
-
-  const pxFromPct = (pct: number, total: number) => (pct / 100) * total;
-  const pctFromPx = (px: number, total: number) => total === 0 ? 0 : (px / total) * 100;
-
-  const startDrag = (clientX: number, clientY: number) => {
-    if (!boxRef.current) return;
-    const rect = boxRef.current.getBoundingClientRect();
-    draggingRef.current = {
-      startX: clientX,
-      startY: clientY,
-      startLeftPx: pxFromPct(box.xPct, area.w),
-      startTopPx:  pxFromPct(box.yPct, area.h),
-      elW: rect.width,
-      elH: rect.height,
-    };
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-  };
-  const onMouseDownHandle = (e: React.MouseEvent) => { onSelect(k); startDrag(e.clientX, e.clientY); };
-  const onMouseMove = (ev: MouseEvent) => {
-    if (!draggingRef.current) return;
-    let newLeftPx = draggingRef.current.startLeftPx + (ev.clientX - draggingRef.current.startX);
-    let newTopPx  = draggingRef.current.startTopPx  + (ev.clientY - draggingRef.current.startY);
-    newLeftPx = Math.max(0, Math.min(area.w - draggingRef.current.elW, newLeftPx));
-    newTopPx  = Math.max(0, Math.min(area.h - draggingRef.current.elH, newTopPx));
-    onPosChange(k, {
-      xPct: Math.max(0, Math.min(100, pctFromPx(newLeftPx, area.w))),
-      yPct: Math.max(0, Math.min(100, pctFromPx(newTopPx,  area.h))),
-    });
-  };
-  const onMouseUp = () => {
-    draggingRef.current = null;
-    window.removeEventListener("mousemove", onMouseMove);
-    window.removeEventListener("mouseup", onMouseUp);
-  };
-
-  const onTouchStartHandle = (e: React.TouchEvent) => {
-    onSelect(k);
-    const t = e.touches[0];
-    if (!boxRef.current) return;
-    const rect = boxRef.current.getBoundingClientRect();
-    draggingRef.current = {
-      startX: t.clientX, startY: t.clientY,
-      startLeftPx: pxFromPct(box.xPct, area.w),
-      startTopPx:  pxFromPct(box.yPct, area.h),
-      elW: rect.width, elH: rect.height,
-    };
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("touchend", onTouchEnd);
-  };
-  const onTouchMove = (ev: TouchEvent) => {
-    ev.preventDefault();
-    if (!draggingRef.current) return;
-    const t = ev.touches[0];
-    let newLeftPx = draggingRef.current.startLeftPx + (t.clientX - draggingRef.current.startX);
-    let newTopPx  = draggingRef.current.startTopPx  + (t.clientY - draggingRef.current.startY);
-    newLeftPx = Math.max(0, Math.min(area.w - draggingRef.current.elW, newLeftPx));
-    newTopPx  = Math.max(0, Math.min(area.h - draggingRef.current.elH, newTopPx));
-    onPosChange(k, {
-      xPct: Math.max(0, Math.min(100, pctFromPx(newLeftPx, area.w))),
-      yPct: Math.max(0, Math.min(100, pctFromPx(newTopPx,  area.h))),
-    });
-  };
-  const onTouchEnd = () => {
-    draggingRef.current = null;
-    window.removeEventListener("touchmove", onTouchMove);
-    window.removeEventListener("touchend", onTouchEnd);
-  };
-
-  return (
-    <div
-      ref={boxRef}
-      className={`absolute ${selected ? "ring-2 ring-blue-500/60 rounded" : ""}`}
-      style={{ left: `${box.xPct}%`, top: `${box.yPct}%`, width: `${box.widthPct}%` }}
-      onClick={() => onSelect(k)}
-    >
-      {selected && (
-        <div
-          className="absolute -top-3 left-0 h-3 w-24 rounded bg-blue-500/80 cursor-move"
-          onMouseDown={onMouseDownHandle}
-          onTouchStart={onTouchStartHandle}
-          title="Arrastra para mover"
-        />
-      )}
-      <div
-        contentEditable
-        suppressContentEditableWarning
-        onInput={(e) => onTextChange(k, (e.target as HTMLElement).innerText)}
-        className="outline-none select-text"
-        style={{
-          fontSize: style.fontSize,
-          color: style.color,
-          fontWeight: style.fontWeight,
-          textAlign: style.textAlign,
-          paddingTop: style.padding.t,
-          paddingRight: style.padding.r,
-          paddingBottom: style.padding.b,
-          paddingLeft: style.padding.l,
-          marginTop: style.margin.t,
-          marginRight: style.margin.r,
-          marginBottom: style.margin.b,
-          marginLeft: style.margin.l,
-          lineHeight: 1.15,
-          wordBreak: "break-word",
-          userSelect: "text",
-        }}
-      >
-        {text}
-      </div>
-    </div>
-  );
-}
-
-/* --- Panel: controles de una caja de texto --- */
 function TextControls({
   k, text, style, box, onTextChange, onStyleChange, onPRChange, onBoxChange
 }: {
@@ -290,89 +170,118 @@ function TextControls({
           <textarea
             value={text}
             onChange={(e)=>onTextChange(e.target.value)}
-            className="w-full h-20 rounded border border-gray-300 p-2 text-sm"
+            className="w-full h-24 rounded border border-gray-300 p-2 text-sm"
           />
         </div>
 
         <label className="text-sm text-gray-600">Tamaño</label>
         <div className="flex items-center gap-2">
-          <input type="range" min={12} max={160}
+          <input
+            type="range" min={12} max={160}
             value={style.fontSize}
             onChange={(e)=>onStyleChange("fontSize", Number(e.target.value))}
-            className="w-40"/>
+            className="w-40"
+          />
           <span className="w-12 text-right text-sm">{style.fontSize}px</span>
         </div>
 
         <label className="text-sm text-gray-600">Color</label>
-        <input type="color" value={style.color}
+        <input
+          type="color"
+          value={style.color}
           onChange={(e)=>onStyleChange("color", e.target.value)}
-          className="h-8 w-12 p-0 border border-gray-300 rounded" />
+          className="h-8 w-12 p-0 border border-gray-300 rounded"
+        />
 
         <label className="text-sm text-gray-600">Peso</label>
-        <select value={style.fontWeight}
+        <select
+          value={style.fontWeight}
           onChange={(e)=>onStyleChange("fontWeight", Number(e.target.value) as Weight)}
-          className="border rounded p-1">
-          <option value={400}>400</option><option value={500}>500</option>
-          <option value={600}>600</option><option value={700}>700</option><option value={800}>800</option>
+          className="border rounded p-1"
+        >
+          <option value={400}>400</option>
+          <option value={500}>500</option>
+          <option value={600}>600</option>
+          <option value={700}>700</option>
+          <option value={800}>800</option>
         </select>
 
         <label className="text-sm text-gray-600">Alineación</label>
-        <select value={style.textAlign}
+        <select
+          value={style.textAlign}
           onChange={(e)=>onStyleChange("textAlign", e.target.value as TextAlign)}
-          className="border rounded p-1">
-          <option value="left">Izq</option><option value="center">Centro</option><option value="right">Der</option>
+          className="border rounded p-1"
+        >
+          <option value="left">Izquierda</option>
+          <option value="center">Centrado</option>
+          <option value="right">Derecha</option>
         </select>
 
         <label className="text-sm text-gray-600">Pos. X</label>
         <div className="flex items-center gap-2">
-          <input type="range" min={0} max={100}
+          <input
+            type="range" min={0} max={100}
             value={box.xPct}
             onChange={(e)=>onBoxChange({ xPct: Number(e.target.value) })}
-            className="w-40"/>
+            className="w-40"
+          />
           <span className="w-12 text-right text-sm">{box.xPct}%</span>
         </div>
 
         <label className="text-sm text-gray-600">Pos. Y</label>
         <div className="flex items-center gap-2">
-          <input type="range" min={0} max={100}
+          <input
+            type="range" min={0} max={100}
             value={box.yPct}
             onChange={(e)=>onBoxChange({ yPct: Number(e.target.value) })}
-            className="w-40"/>
+            className="w-40"
+          />
           <span className="w-12 text-right text-sm">{box.yPct}%</span>
         </div>
 
         <label className="text-sm text-gray-600">Ancho</label>
         <div className="flex items-center gap-2">
-          <input type="range" min={10} max={100}
+          <input
+            type="range" min={10} max={100}
             value={box.widthPct}
             onChange={(e)=>onBoxChange({ widthPct: Number(e.target.value) })}
-            className="w-40"/>
+            className="w-40"
+          />
           <span className="w-12 text-right text-sm">{box.widthPct}%</span>
         </div>
       </div>
 
-      <div className="mt-2">
+      {/* Padding */}
+      <div className="mt-3">
         <div className="text-sm font-medium text-gray-700 mb-2">Padding (px)</div>
         <div className="grid grid-cols-4 gap-2">
           {(["t","r","b","l"] as const).map(edge=>(
             <div key={edge} className="flex flex-col">
               <label className="text-xs text-gray-500 uppercase">{edge}</label>
-              <input type="number" value={style.padding[edge]}
+              <input
+                type="number"
+                value={style.padding[edge]}
                 onChange={(e)=>onPRChange("padding", edge, Number(e.target.value))}
-                className="border rounded p-1"/>
+                className="border rounded p-1"
+              />
             </div>
           ))}
         </div>
       </div>
-      <div className="mt-2">
+
+      {/* Margin */}
+      <div className="mt-3">
         <div className="text-sm font-medium text-gray-700 mb-2">Margen (px)</div>
         <div className="grid grid-cols-4 gap-2">
           {(["t","r","b","l"] as const).map(edge=>(
             <div key={edge} className="flex flex-col">
               <label className="text-xs text-gray-500 uppercase">{edge}</label>
-              <input type="number" value={style.margin[edge]}
+              <input
+                type="number"
+                value={style.margin[edge]}
                 onChange={(e)=>onPRChange("margin", edge, Number(e.target.value))}
-                className="border rounded p-1"/>
+                className="border rounded p-1"
+              />
             </div>
           ))}
         </div>
@@ -381,8 +290,89 @@ function TextControls({
   );
 }
 
-/* --- Imagen superpuesta (drag) --- */
-function ImageOverlay({
+/* --- TextBox (editable + drag) --- */
+function TextBox({
+  k, text, style, box, selected, area, onSelect, onTextChange, onPosChange
+}: {
+  k: TextKey;
+  text: string;
+  style: TextStyle;
+  box: TextBoxPos;
+  selected: boolean;
+  area: AreaSize;
+  onSelect: (k: TextKey) => void;
+  onTextChange: (k: TextKey, v: string) => void;
+  onPosChange: (k: TextKey, patch: Partial<TextBoxPos>) => void;
+}) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startX: number; startY: number; startLeftPx: number; startTopPx: number; elW: number; elH: number; } | null>(null);
+  const pxFromPct = (pct: number, total: number) => (pct / 100) * total;
+  const pctFromPx = (px: number, total: number) => total === 0 ? 0 : (px / total) * 100;
+
+  const beginDrag = (clientX: number, clientY: number) => {
+    if (!boxRef.current) return;
+    const rect = boxRef.current.getBoundingClientRect();
+    dragRef.current = {
+      startX: clientX, startY: clientY,
+      startLeftPx: pxFromPct(box.xPct, area.w), startTopPx: pxFromPct(box.yPct, area.h),
+      elW: rect.width, elH: rect.height,
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+  const onDown = (e: React.MouseEvent) => { onSelect(k); beginDrag(e.clientX, e.clientY); };
+  const onMove = (ev: MouseEvent) => {
+    if (!dragRef.current) return;
+    let newLeftPx = dragRef.current.startLeftPx + (ev.clientX - dragRef.current.startX);
+    let newTopPx  = dragRef.current.startTopPx  + (ev.clientY - dragRef.current.startY);
+    newLeftPx = Math.max(0, Math.min(area.w - dragRef.current.elW, newLeftPx));
+    newTopPx  = Math.max(0, Math.min(area.h - dragRef.current.elH, newTopPx));
+    onPosChange(k, {
+      xPct: Math.max(0, Math.min(100, pctFromPx(newLeftPx, area.w))),
+      yPct: Math.max(0, Math.min(100, pctFromPx(newTopPx,  area.h))),
+    });
+  };
+  const onUp = () => {
+    dragRef.current = null;
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseup", onUp);
+  };
+
+  return (
+    <div
+      ref={boxRef}
+      className={`absolute ${selected ? "ring-2 ring-blue-500/60 rounded" : ""}`}
+      style={{ left: `${box.xPct}%`, top: `${box.yPct}%`, width: `${box.widthPct}%` }}
+      onClick={() => onSelect(k)}
+    >
+      {selected && (
+        <div
+          className="absolute -top-3 left-0 h-3 w-24 rounded bg-blue-500/80 cursor-move"
+          onMouseDown={onDown}
+          title="Arrastra para mover"
+        />
+      )}
+      <div
+        contentEditable
+        suppressContentEditableWarning
+        onInput={(e) => onTextChange(k, (e.target as HTMLElement).innerText)}
+        className="outline-none select-text"
+        style={{
+          fontSize: style.fontSize, color: style.color, fontWeight: style.fontWeight,
+          textAlign: style.textAlign,
+          paddingTop: style.padding.t, paddingRight: style.padding.r, paddingBottom: style.padding.b, paddingLeft: style.padding.l,
+          marginTop: style.margin.t, marginRight: style.margin.r, marginBottom: style.margin.b, marginLeft: style.margin.l,
+          lineHeight: 1.15, wordBreak: "break-word", userSelect: "text", whiteSpace: "pre-line",
+        }}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
+/* --- Imagen (drag) reutilizable --- */
+function DraggableImage({
   src, style, area, selected, onSelect, onStyleChange
 }: {
   src: string;
@@ -413,65 +403,37 @@ function ImageOverlay({
     window.addEventListener("mouseup", onUp);
   };
 
-  const onTouchStart = (e: React.TouchEvent<HTMLImageElement>) => {
-    onSelect();
-    const t = e.touches[0];
-    const img = e.currentTarget;
-    const rect = img.getBoundingClientRect();
-    const startLeft = (style.xPct/100)*area.w;
-    const startTop  = (style.yPct/100)*area.h;
-    const start = { x: t.clientX, y: t.clientY };
-    const onMove = (ev: TouchEvent) => {
-      ev.preventDefault();
-      const tt = ev.touches[0];
-      let newLeft = startLeft + (tt.clientX - start.x);
-      let newTop  = startTop  + (tt.clientY - start.y);
-      newLeft = Math.max(0, Math.min(area.w - rect.width, newLeft));
-      newTop  = Math.max(0, Math.min(area.h - rect.height, newTop));
-      onStyleChange({
-        xPct: Math.max(0, Math.min(100, (newLeft/area.w)*100)),
-        yPct: Math.max(0, Math.min(100, (newTop /area.h)*100)),
-      });
-    };
-    const onEnd = () => { window.removeEventListener("touchmove", onMove); window.removeEventListener("touchend", onEnd); };
-    window.addEventListener("touchmove", onMove, { passive: false });
-    window.addEventListener("touchend", onEnd);
-  };
-
   return (
     <img
       src={src}
-      alt="Overlay"
+      alt="img"
       onMouseDown={onMouseDown}
-      onTouchStart={onTouchStart}
       className={`select-none cursor-move ${selected ? "ring-2 ring-blue-500/60 rounded" : ""}`}
       style={{
         position: "absolute",
-        left: `${style.xPct}%`,
-        top: `${style.yPct}%`,
-        width: `${style.widthPct}%`,
-        height: "auto",
-        opacity: style.opacity,
-        borderRadius: style.borderRadius,
+        left: `${style.xPct}%`, top: `${style.yPct}%`, width: `${style.widthPct}%`, height: "auto",
+        opacity: style.opacity, borderRadius: style.borderRadius,
         transform: `rotate(${style.rotation}deg) scaleX(${style.flipX?-1:1}) scaleY(${style.flipY?-1:1})`,
-        transformOrigin: "top left",
-        zIndex: selected ? 20 : 10,
+        transformOrigin: "top left", zIndex: selected ? 20 : 10,
       }}
       draggable={false}
     />
   );
 }
 
-/* --- Panel: controles de imagen --- */
+/* --- Panel: controles de imagen genéricos --- */
 function ImageControls({
-  src, style, onSrcChange, onStyleChange
+  title, src, style, onSrcChange, onStyleChange, allowUpload = true
 }: {
+  title: string;
   src: string | null;
   style: ImageStyle;
-  onSrcChange: (dataUrl: string | null) => void;
+  onSrcChange?: (dataUrl: string | null) => void;
   onStyleChange: (patch: Partial<ImageStyle>) => void;
+  allowUpload?: boolean;
 }) {
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!onSrcChange) return;
     const f = e.target.files?.[0]; if (!f) return;
     const r = new FileReader();
     r.onload = () => onSrcChange(r.result as string);
@@ -479,30 +441,30 @@ function ImageControls({
   };
   return (
     <div className="space-y-3">
-      <div>
-        <label className="text-sm text-gray-600 block mb-1">Archivo</label>
-        <input type="file" accept="image/*" onChange={onPick} />
-        {src ? (
-          <div className="text-xs text-green-700 mt-1">Imagen cargada</div>
-        ) : (
-          <div className="text-xs text-gray-500 mt-1">Sube PNG/JPG</div>
-        )}
-      </div>
+      <div className="font-semibold">{title}</div>
+
+      {allowUpload && onSrcChange && (
+        <div>
+          <label className="text-sm text-gray-600 block mb-1">Archivo</label>
+          <input type="file" accept="image/*" onChange={onPick} />
+          <div className="text-xs mt-1">{src ? "Imagen cargada" : "Sube PNG/JPG"}</div>
+        </div>
+      )}
 
       <LabeledSlider label="Tamaño"   min={5}   max={100} value={style.widthPct}  onChange={(v)=>onStyleChange({ widthPct: v })} unit="%" />
       <LabeledSlider label="Opacidad" min={0}   max={1}   value={style.opacity}   onChange={(v)=>onStyleChange({ opacity: v })} step={0.01} unit={`${Math.round(style.opacity*100)}%`} />
       <LabeledSlider label="Rotación" min={-180} max={180} value={style.rotation} onChange={(v)=>onStyleChange({ rotation: v })} unit="°" />
       <LabeledSlider label="Borde"    min={0}   max={120} value={style.borderRadius} onChange={(v)=>onStyleChange({ borderRadius: v })} unit="px" />
-
       <LabeledSlider label="Pos. X"   min={0}   max={100} value={style.xPct}     onChange={(v)=>onStyleChange({ xPct: v })} unit="%" />
       <LabeledSlider label="Pos. Y"   min={0}   max={100} value={style.yPct}     onChange={(v)=>onStyleChange({ yPct: v })} unit="%" />
 
+      {/* flips opcionales; para logo normalmente no se usan, pero se deja por consistencia */}
       <div className="flex items-center gap-3">
         <button className={`px-2 py-1 text-sm rounded border ${style.flipX?"bg-gray-800 text-white":"border-gray-300"}`}
           onClick={()=>onStyleChange({ flipX: !style.flipX })}>Flip X</button>
         <button className={`px-2 py-1 text-sm rounded border ${style.flipY?"bg-gray-800 text-white":"border-gray-300"}`}
           onClick={()=>onStyleChange({ flipY: !style.flipY })}>Flip Y</button>
-        {src && (
+        {allowUpload && onSrcChange && src && (
           <button className="ml-auto px-2 py-1 text-sm rounded border border-red-300 text-red-600"
             onClick={()=>onSrcChange(null)}>Quitar imagen</button>
         )}
@@ -511,21 +473,31 @@ function ImageControls({
   );
 }
 
-/* ─────────────── Editor contenedor ─────────────── */
+/* ─────────────── Editor ─────────────── */
 export default function EditorSanRamon() {
   const bgSrc = "/images/img1.png";
   const [principalRef, principalSize] = useElementSize<HTMLDivElement>();
   const natBg = useImageNaturalSize(bgSrc);
   const drawn = useMemo(() => computeContainRect(principalSize, natBg), [principalSize, natBg]);
+
   const deviceId = useDeviceId();
   const screenInfo = useScreenInfo();
 
-  // ====== ESTADOS (deben ir ANTES de los effects que los usan)
+  // Defaults capilla
+  const hoyISO = new Date().toISOString().slice(0,10);
+  const ahoraHM = new Date().toTimeString().slice(0,5);
+  const [capillaSeleccionada, setCapillaSeleccionada] = useState(CAPILLAS[0]);
+  const [fechaInput, setFechaInput] = useState(hoyISO);
+  const [horaInput, setHoraInput] = useState(ahoraHM);
+  const [lugar, setLugar] = useState("San Ramón casa funeraria");
+  const [autoCapilla, setAutoCapilla] = useState(true);
+
+  // Textos/estilos/posiciones
   const [text, setText] = useState<Record<TextKey, string>>({
     titulo: "Con profunda tristeza nos despedimos de",
     nombre: "Editor San Ramón",
     fecha:  "12/10/2025 + 12/10/2025",
-    capilla: "AGRADECEMOS LA PRESENCIA DE AMIGOS Y FAMILIARES DURANTE EL ÚLTIMO ADIÓS EL DÍA:",
+    capilla: construirFraseCapilla({ fechaISO: hoyISO, horaHM: ahoraHM, lugar, capilla: CAPILLAS[0] }),
   });
   const [styles, setStyles] = useState<Record<TextKey, TextStyle>>({
     titulo: { fontSize: 25, color: "#1f2937", fontWeight: 600, textAlign: "center",
@@ -543,12 +515,29 @@ export default function EditorSanRamon() {
     fecha:  { xPct: 10, yPct: 50, widthPct: 80 },
     capilla:{ xPct: 10, yPct: 64, widthPct: 80 },
   });
-  const [overlaySrc, setOverlaySrc] = useState<string | null>(null);
+
+  // Overlays: luto (editable) y logo (siempre visible)
+  const [overlaySrc, setOverlaySrc] = useState<string | null>("/images/luto.png"); // default asegurado
   const [imgStyle, setImgStyle] = useState<ImageStyle>({
     xPct: 40, yPct: 55, widthPct: 30, opacity: 1, rotation: 0, borderRadius: 0, flipX: false, flipY: false,
   });
+  const [logoStyle, setLogoStyle] = useState<ImageStyle>({
+    xPct: 35, yPct: 78, widthPct: 30, opacity: 1, rotation: 0, borderRadius: 0, flipX: false, flipY: false,
+  });
+
   const [selectedKey, setSelectedKey] = useState<Key>("titulo");
-  const isTextKey = (k: Key): k is TextKey => k !== "imagen";
+  const isTextKey = (k: Key): k is TextKey => k !== "imagen" && k !== "logo";
+
+  // Auto generar capilla
+  useEffect(() => {
+    if (!autoCapilla) return;
+    setText(t => ({
+      ...t,
+      capilla: construirFraseCapilla({
+        fechaISO: fechaInput, horaHM: horaInput, lugar, capilla: capillaSeleccionada,
+      }),
+    }));
+  }, [capillaSeleccionada, fechaInput, horaInput, lugar, autoCapilla]);
 
   // Guardado/rehidratación
   const hydratingRef = React.useRef(true);
@@ -557,49 +546,45 @@ export default function EditorSanRamon() {
 
   // Rehidratar
   useEffect(() => {
-    if (!deviceId) return; // espera hasta que exista
-
+    if (!deviceId) return;
     (async () => {
-      const { data: row, error } = await supabase
+      const { data, error } = await supabase
         .from("memorial_config")
         .select("config")
         .eq("funeraria", PAGE_SLUG)
-        .eq("device_id", deviceId)  // <- usa el hook
+        .eq("device_id", deviceId)
         .maybeSingle();
 
       if (error) {
         console.error("Error cargando:", error);
-      } else if (row?.config) {
-        const s = row.config as SavedState;
+      } else if (data?.config) {
+        const s = data.config as Partial<SavedState>;
         if (s.text)   setText(s.text);
         if (s.styles) setStyles(s.styles);
         if (s.boxes)  setBoxes(s.boxes);
-        // if ("overlaySrc" in s) setOverlaySrc(s.overlaySrc);
-        if (s.imgStyle) setImgStyle(s.imgStyle);
+        // Mantén el default de luto si no viene desde DB:
+        if (typeof s.overlaySrc === "string" && s.overlaySrc.length > 0) setOverlaySrc(s.overlaySrc);
+        if (s.imgStyle)  setImgStyle(s.imgStyle);
+        if (s.logoStyle) setLogoStyle(s.logoStyle); // rehidratar logo
       }
       hydratingRef.current = false;
     })();
-
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId]);
 
   // Autosave (debounce)
   useEffect(() => {
     if (hydratingRef.current || !deviceId) return;
-
     setSaveStatus("saving");
     if (saveTimer.current) clearTimeout(saveTimer.current);
-
     saveTimer.current = setTimeout(async () => {
-      const payload: SavedState = { text, styles, boxes, overlaySrc, imgStyle };
-
+      const payload: SavedState = { text, styles, boxes, overlaySrc, imgStyle, logoStyle };
       const { error } = await supabase
         .from("memorial_config")
         .upsert(
           {
             funeraria: PAGE_SLUG,
-            device_id: deviceId,         // <- string del hook
+            device_id: deviceId,
             resolution_w: screenInfo.w,
             resolution_h: screenInfo.h,
             dpr: screenInfo.dpr,
@@ -608,29 +593,30 @@ export default function EditorSanRamon() {
           },
           { onConflict: "funeraria,device_id" }
         );
-
-      if (error) {
-        console.error("Error guardando:", error);
-        setSaveStatus("error");
-      } else {
-        setSaveStatus("saved");
-        setTimeout(() => setSaveStatus("idle"), 1000);
-      }
+      if (error) { console.error("Error guardando:", error); setSaveStatus("error"); }
+      else { setSaveStatus("saved"); setTimeout(() => setSaveStatus("idle"), 1000); }
     }, 600);
-
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, [text, styles, boxes, overlaySrc, imgStyle, screenInfo, deviceId]);
+  }, [text, styles, boxes, overlaySrc, imgStyle, logoStyle, screenInfo, deviceId]);
 
-
-
-  // Helpers actualización
+  // Helpers
   const setTextByKey = (k: TextKey, v: string) => setText((t) => ({ ...t, [k]: v }));
   const updateStyle = <K extends keyof TextStyle>(k: TextKey, key: K, val: TextStyle[K]) =>
     setStyles((s) => ({ ...s, [k]: { ...s[k], [key]: val } }));
-  const updatePR = (k: TextKey, kind: "padding" | "margin", edge: "t" | "r" | "b" | "l", val: number) =>
-    setStyles((s) => ({ ...s, [k]: { ...s[k], [kind]: { ...s[k][kind], [edge]: val } } }));
   const updateBox = (k: TextKey, patch: Partial<TextBoxPos>) =>
     setBoxes((b) => ({ ...b, [k]: { ...b[k], ...patch } }));
+
+  // 👇 NUEVO: para actualizar padding/margin por borde
+  const updatePR = (
+    k: TextKey,
+    kind: "padding" | "margin",
+    edge: "t" | "r" | "b" | "l",
+    val: number
+  ) =>
+    setStyles((s) => ({
+      ...s,
+      [k]: { ...s[k], [kind]: { ...s[k][kind], [edge]: val } },
+    }));
 
   return (
     <div className="w-full h-[100vh] flex">
@@ -638,18 +624,53 @@ export default function EditorSanRamon() {
       <div className="w-[380px] h-full bg-white border-r border-gray-200 overflow-auto p-4 space-y-4">
         <h2 className="text-lg font-semibold text-black">Controles</h2>
 
-        {/* Selector de capa */}
+        {/* Selector */}
         <div className="flex gap-2 flex-wrap">
-          {(["titulo","nombre","fecha","capilla","imagen"] as Key[]).map(k => (
+          {(["titulo","nombre","fecha","capilla","imagen","logo"] as Key[]).map(k => (
             <button key={k} onClick={() => setSelectedKey(k)}
-              className={`px-3 py-1 rounded border text-sm ${
-                selectedKey===k ? "bg-blue-600 text-white border-blue-600":"border-black text-black"}`}>
-              {k==="titulo"?"Título":k==="nombre"?"Nombre":k==="fecha"?"Fecha":k==="capilla"?"Capilla":"Imagen"}
+              className={`px-3 py-1 rounded border text-sm ${selectedKey===k ? "bg-blue-600 text-white border-blue-600":"border-black text-black"}`}>
+              {k==="titulo"?"Título":k==="nombre"?"Nombre":k==="fecha"?"Fecha":k==="capilla"?"Capilla":k==="imagen"?"Luto":"Logo"}
             </button>
           ))}
         </div>
 
-        {/* Panel dinámico */}
+        {/* Composer Capilla */}
+        {selectedKey === "capilla" && (
+          <div className="mt-4 space-y-3 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold">Generar texto de Capilla</div>
+              <label className="flex items-center gap-2 text-xs">
+                <input type="checkbox" checked={autoCapilla} onChange={(e)=>setAutoCapilla(e.target.checked)} /> Auto
+              </label>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600 block mb-1">Capilla</label>
+              <select className="border rounded p-2 w-full" value={capillaSeleccionada} onChange={(e)=>setCapillaSeleccionada(e.target.value)}>
+                {CAPILLAS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Fecha</label>
+                <input type="date" className="border rounded p-2 w-full" value={fechaInput} onChange={(e)=>setFechaInput(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Hora</label>
+                <input type="time" className="border rounded p-2 w-full" value={horaInput} onChange={(e)=>setHoraInput(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600 block mb-1">Lugar</label>
+              <input type="text" className="border rounded p-2 w-full" value={lugar} onChange={(e)=>setLugar(e.target.value)} placeholder="San Ramón casa funeraria" />
+            </div>
+            <div className="text-xs text-gray-700 bg-gray-50 border rounded p-2">
+              <div className="font-semibold mb-1">Vista previa</div>
+              {construirFraseCapilla({ fechaISO: fechaInput, horaHM: horaInput, lugar, capilla: capillaSeleccionada })}
+            </div>
+          </div>
+        )}
+
+        {/* Controles dinámicos */}
         {isTextKey(selectedKey) ? (
           <TextControls
             k={selectedKey}
@@ -661,12 +682,22 @@ export default function EditorSanRamon() {
             onPRChange={(kind,edge,val)=>updatePR(selectedKey, kind, edge, val)}
             onBoxChange={(patch)=>updateBox(selectedKey, patch)}
           />
-        ) : (
+        ) : selectedKey === "imagen" ? (
           <ImageControls
+            title="Luto"
             src={overlaySrc}
             style={imgStyle}
             onSrcChange={setOverlaySrc}
             onStyleChange={(patch)=>setImgStyle(s=>({ ...s, ...patch }))}
+            allowUpload={true}
+          />
+        ) : (
+          <ImageControls
+            title="Logo (siempre visible)"
+            src={"/images/logo-funeraria.png"}
+            style={logoStyle}
+            onStyleChange={(patch)=>setLogoStyle(s=>({ ...s, ...patch }))}
+            allowUpload={false}
           />
         )}
       </div>
@@ -675,12 +706,7 @@ export default function EditorSanRamon() {
       <div className="h-full w-full bg-gray-200">
         <div id="idDivPrincipal" ref={principalRef} className="relative h-full w-full">
           {/* Fondo */}
-          <img
-            src="/images/img1.png"
-            alt="Fondo"
-            className="absolute inset-0 h-full w-full object-contain select-none pointer-events-none"
-            draggable={false}
-          />
+          <img src={bgSrc} alt="Fondo" className="absolute inset-0 h-full w-full object-contain select-none pointer-events-none" draggable={false} />
 
           {/* Área útil */}
           {drawn && (
@@ -700,8 +726,9 @@ export default function EditorSanRamon() {
                 />
               ))}
 
+              {/* Luto (editable, puede cambiarse o quitarse) */}
               {overlaySrc && (
-                <ImageOverlay
+                <DraggableImage
                   src={overlaySrc}
                   style={imgStyle}
                   area={{ w: drawn.w, h: drawn.h }}
@@ -710,20 +737,24 @@ export default function EditorSanRamon() {
                   onStyleChange={(patch)=>setImgStyle(s=>({ ...s, ...patch }))}
                 />
               )}
+
+              {/* Logo independiente, siempre visible */}
+              <DraggableImage
+                src={LOGO_SRC}
+                style={logoStyle}
+                area={{ w: drawn.w, h: drawn.h }}
+                selected={selectedKey==="logo"}
+                onSelect={()=>setSelectedKey("logo")}
+                onStyleChange={(patch)=>setLogoStyle(s=>({ ...s, ...patch }))}
+              />
             </div>
           )}
 
           {/* Badge de guardado */}
           <div className="absolute top-2 left-2 bg-white/80 text-[11px] px-2 py-1 rounded shadow">
             {saveStatus === "saving" ? "Guardando…" :
-            saveStatus === "saved"  ? "Guardado ✓" :
-            saveStatus === "error"  ? "Error al guardar" : null}
-          </div>
-
-          {/* Debug */}
-          <div className="absolute top-2 right-2 bg-black/60 text-white text-xs rounded px-2 py-1">
-            cont: {principalSize.width}×{principalSize.height}px
-            {drawn ? ` · img: ${drawn.w}×${drawn.h}px` : " · img: cargando..."}
+             saveStatus === "saved"  ? "Guardado ✓" :
+             saveStatus === "error"  ? "Error al guardar" : null}
           </div>
         </div>
       </div>
