@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../services/dbConnection";
-import { Box, Typography, Grid, Input, Slider, Select, MenuItem, Divider, TextField, Stack } from "@mui/material";
+import { Box, Typography, Grid, Input, Slider, Select, MenuItem, Divider, TextField, Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
 const PAGE_SLUG = "ramon";
 const LOGO_SRC = "/images/logoSanRamon.svg"; // asegúrate de que existe
@@ -89,6 +89,14 @@ type TextAlign = "left" | "center" | "right";
 type Weight = 400 | 500 | 600 | 700 | 800;
 type TextKey = "titulo" | "nombre" | "fecha" | "capilla";
 type Key = TextKey | "imagen" | "logo";
+const KEY_LABELS: Record<Key, string> = {
+  titulo: 'Título',
+  nombre: 'Nombre',
+  imagen: 'Imagen',
+  fecha: 'Fecha',
+  capilla: 'Capilla',
+  logo: 'Logo',
+};
 interface TextStyle {
   fontSize: number;
   color: string;
@@ -132,26 +140,6 @@ ${lugar}
 ${capilla}`;
 }
 
-/* ─────────────── UI básicos ─────────────── */
-function LabeledSlider({
-  label, min, max, value, onChange, step = 1, unit = ""
-}: { label: string; min: number; max: number; value: number; onChange: (v:number)=>void; step?: number; unit?: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <label className="text-sm text-gray-600 w-28">{label}</label>
-      <input type="range" min={min} max={max} step={step} value={value}
-        onChange={(e)=>onChange(Number(e.target.value))} className="flex-1" />
-      <span className="w-14 text-right text-sm">
-        {unit ? (unit.includes("%") ? `${value}%` :
-                 unit.includes("°") ? `${value}°` :
-                 unit.includes("px") ? `${value}px` : unit)
-             : value}
-      </span>
-    </div>
-  );
-}
-
-
 function TextControls({
   text, style, box, onTextChange, onStyleChange, onPRChange, onBoxChange
 }: {
@@ -166,16 +154,7 @@ function TextControls({
 }) {
 
   return (
-      <div className="grid grid-cols-2 gap-3 items-center">
-        <label className="text-lg text-black col-span-2">Editar</label>
-        <div className="col-span-2">
-          <textarea
-            value={text}
-            onChange={(e)=>onTextChange(e.target.value)}
-            className="w-full h-24 rounded border border-gray-500 p-2 text-sm text-black"
-          />
-      </div>
-
+    <div className="grid grid-cols-2 gap-3 items-center">
     <Box sx={{ width: 280 }}>
       <Typography variant="h5" color="Black" gutterBottom>
         Fuente
@@ -264,7 +243,7 @@ function TextControls({
           ))}
         </Grid>
       </Grid>
-      <Divider />      
+      <Divider component="li" />     
       <Typography id="labelPosX" variant="h6" color="Black" gutterBottom>
         Posición de caja seleccionado
       </Typography>
@@ -312,6 +291,19 @@ function TextControls({
           </Stack>
         </Grid>
       </Grid>
+      <Divider component="li" />
+      <Typography variant="h5" color="Black" gutterBottom>
+        Editar
+      </Typography>
+      <TextField
+        fullWidth 
+        id="outlined-multiline-static"
+        label="Texto"
+        multiline
+        rows={4}
+        value={text}
+        onChange={(e)=>onTextChange(e.target.value)}
+      />
     </Box>
     </div>
 
@@ -451,10 +443,9 @@ function DraggableImage({
 
 /* --- Panel: controles de imagen genéricos --- */
 function ImageControls({
-  title, src, style, onSrcChange, onStyleChange, allowUpload = true
+  title, style, onSrcChange, onStyleChange, allowUpload = true
 }: {
   title: string;
-  src: string | null;
   style: ImageStyle;
   onSrcChange?: (dataUrl: string | null) => void;
   onStyleChange: (patch: Partial<ImageStyle>) => void;
@@ -468,36 +459,112 @@ function ImageControls({
     r.readAsDataURL(f);
   };
   return (
-    <div className="space-y-3">
-      <div className="font-semibold">{title}</div>
+    <Box sx={{ width: 280 }} >
+      <Typography variant="h6" color="Black" gutterBottom>
+        {title}
+      </Typography>
+      <Input type="file" onChange={onPick} disabled={!allowUpload} />
+      <Grid container spacing={2}>
+        <Grid size={4}>
+          <Stack spacing={1}>
+            <Typography id="ImagenTamaño" variant="subtitle1" color="Black">
+              Tamaño
+            </Typography>
+            <Slider
+              aria-label="PosX"
+              min={5}
+              max={100}
+              value={style.widthPct}
+              onChange={(_, newValue) =>
+                onStyleChange({ widthPct: newValue as number })
+              }
+            />
+          </Stack>
+        </Grid >
+        <Grid size={4}>
+          <Stack spacing={1}>
+            <Typography id="labelY" variant="subtitle1" color="Black" gutterBottom>
+              Opacidad
+            </Typography>
+            <Slider
+              aria-label="PosY"
+              min={0}
+              max={1}
+              step={0.1}
+              value={style.opacity}
+              onChange={(_, newValue) =>
+                onStyleChange({ opacity: newValue as number })
+              }
+            />
+          </Stack>
+        </Grid>
+        <Grid size={4}>
+          <Stack spacing={1}>
+            <Typography id="labelW" variant="subtitle1" color="Black" gutterBottom>
+              Rotación
+            </Typography>
+            <Slider
+              aria-label="PosY"
+              min={-180}
+              max={180}
+              value={style.rotation}
+              onChange={(_, newValue) =>
+                onStyleChange({ rotation: newValue as number })
+              }
+            />
+          </Stack>
+        </Grid>
+        <Grid size={4}>
+          <Stack spacing={1}>
+            <Typography id="labelW" variant="subtitle1" color="Black" gutterBottom>
+              Borde
+            </Typography>
+            <Slider
+              aria-label="PosY"
+              min={0}
+              max={500}
+              value={style.borderRadius}
+              onChange={(_, newValue) =>
+                onStyleChange({ borderRadius: newValue as number })
+              }
+            />
+          </Stack>
+        </Grid>
+        <Grid size={4}>
+          <Stack spacing={1}>
+            <Typography id="labelW" variant="subtitle1" color="Black" gutterBottom>
+              Posición X
+            </Typography>
+            <Slider
+              aria-label="PosY"
+              min={0}
+              max={100}
+              value={style.xPct}
+              onChange={(_, newValue) =>
+                onStyleChange({ xPct: newValue as number })
+              }
+            />
+          </Stack>
+        </Grid>
+        <Grid size={4}>
+          <Stack spacing={1}>
+            <Typography id="labelW" variant="subtitle1" color="Black" gutterBottom>
+              Posición Y
+            </Typography>
+            <Slider
+              aria-label="PosY"
+              min={0}
+              max={100}
+              value={style.yPct}
+              onChange={(_, newValue) =>
+                onStyleChange({ yPct: newValue as number })
+              }
+            />
+          </Stack>
+        </Grid>
+      </Grid>
 
-      {allowUpload && onSrcChange && (
-        <div>
-          <label className="text-sm text-gray-600 block mb-1">Archivo</label>
-          <input type="file" accept="image/*" onChange={onPick} />
-          <div className="text-xs mt-1">{src ? "Imagen cargada" : "Sube PNG/JPG"}</div>
-        </div>
-      )}
-
-      <LabeledSlider label="Tamaño"   min={5}   max={100} value={style.widthPct}  onChange={(v)=>onStyleChange({ widthPct: v })} unit="%" />
-      <LabeledSlider label="Opacidad" min={0}   max={1}   value={style.opacity}   onChange={(v)=>onStyleChange({ opacity: v })} step={0.01} unit={`${Math.round(style.opacity*100)}%`} />
-      <LabeledSlider label="Rotación" min={-180} max={180} value={style.rotation} onChange={(v)=>onStyleChange({ rotation: v })} unit="°" />
-      <LabeledSlider label="Borde"    min={0}   max={180} value={style.borderRadius} onChange={(v)=>onStyleChange({ borderRadius: v })} unit="px" />
-      <LabeledSlider label="Pos. X"   min={0}   max={100} value={style.xPct}     onChange={(v)=>onStyleChange({ xPct: v })} unit="%" />
-      <LabeledSlider label="Pos. Y"   min={0}   max={100} value={style.yPct}     onChange={(v)=>onStyleChange({ yPct: v })} unit="%" />
-
-      {/* flips opcionales; para logo normalmente no se usan, pero se deja por consistencia */}
-      <div className="flex items-center gap-3">
-        <button className={`px-2 py-1 text-sm rounded border ${style.flipX?"bg-gray-800 text-white":"border-gray-300"}`}
-          onClick={()=>onStyleChange({ flipX: !style.flipX })}>Flip X</button>
-        <button className={`px-2 py-1 text-sm rounded border ${style.flipY?"bg-gray-800 text-white":"border-gray-300"}`}
-          onClick={()=>onStyleChange({ flipY: !style.flipY })}>Flip Y</button>
-        {allowUpload && onSrcChange && src && (
-          <button className="ml-auto px-2 py-1 text-sm rounded border border-red-300 text-red-600"
-            onClick={()=>onSrcChange(null)}>Quitar imagen</button>
-        )}
-      </div>
-    </div>
+    </Box>
   );
 }
 
@@ -866,16 +933,39 @@ async function handleExportAndUpload() {
     <div className="w-full h-[100vh] flex">
       {/* Panel izquierdo */}
       <div className="w-[380px] h-full bg-white border-r border-gray-200 overflow-auto p-4 space-y-4">
-        <h2 className="text-lg font-semibold text-black">Menú</h2>
+        <Typography variant="h4" color="Black" gutterBottom>
+          Menú
+        </Typography>
+
         {/* Selector */}
-        <div className="flex gap-2 flex-wrap">
-          {(["titulo","nombre","fecha","capilla","imagen","logo"] as Key[]).map(k => (
-            <button key={k} onClick={() => setSelectedKey(k)}
-              className={`px-3 py-1 rounded border text-sm ${selectedKey===k ? "bg-blue-600 text-white border-blue-600":"border-black text-black"}`}>
-              {k==="titulo"?"Título":k==="nombre"?"Nombre":k==="fecha"?"Fecha":k==="capilla"?"Capilla":k==="imagen"?"Luto":"Logo"}
-            </button>
-          ))}
-        </div>
+        <ToggleButtonGroup
+          exclusive
+          value={selectedKey}
+          onChange={(_, val: Key | null) => {
+            if (val) setSelectedKey(val);
+          }}
+        >
+          <Grid container spacing={1}>
+            <Grid size={12} >
+              {(['titulo', 'nombre', 'imagen'] as const).map((k) => (
+                <ToggleButton key={k} value={k} sx={{ textTransform: 'none', px: 2, py: 0.75, marginLeft:1 }}>
+                  {KEY_LABELS[k]}
+                </ToggleButton>
+              ))}
+            </Grid>
+            <Grid size={12}>
+              {(['fecha', 'capilla', 'logo'] as const).map((k) => (
+                <ToggleButton key={k} value={k} sx={{ textTransform: 'none', px: 2, py: 0.75, marginLeft:1 }}>
+                  {KEY_LABELS[k]}
+                </ToggleButton>
+              ))}
+            </Grid>
+          </Grid>
+        </ToggleButtonGroup>
+      <Divider component="li" />
+
+
+
         {/* Composer Capilla */}
         {selectedKey === "capilla" && (
           <div className="mt-4 space-y-3 border-t pt-4">
@@ -926,8 +1016,7 @@ async function handleExportAndUpload() {
           />
         ) : selectedKey === "imagen" ? (
           <ImageControls
-            title="Luto"
-            src={overlaySrc}
+            title="Imagen de luto (editable)"
             style={imgStyle}
             onSrcChange={setOverlaySrc}
             onStyleChange={(patch)=>setImgStyle(s=>({ ...s, ...patch }))}
@@ -936,7 +1025,6 @@ async function handleExportAndUpload() {
         ) : (
           <ImageControls
             title="Logo (siempre visible)"
-            src={"/images/logoSanRamon.svg"}
             style={logoStyle}
             onStyleChange={(patch)=>setLogoStyle(s=>({ ...s, ...patch }))}
             allowUpload={false}
