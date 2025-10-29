@@ -134,7 +134,7 @@ function formatFechaEs(fechaISO: string, horaHM: string) {
 function construirFraseCapilla({
   fechaISO, horaHM, lugar, capilla,
 }: { fechaISO: string; horaHM: string; lugar: string; capilla: string; }) {
-  return `AGRADECEMOS LA PRESENCIA DE AMIGOS Y FAMILIARES DURANTE EL ÚLTIMO ADIÓS EL DÍA:
+  return `Agradecemos la presencia de amigos y familiares durante el último adiós el día:
 ${formatFechaEs(fechaISO, horaHM)}
 ${lugar}
 ${capilla}`;
@@ -585,7 +585,7 @@ export default function EditorSanRamon() {
   const [fechaInput, setFechaInput] = useState(hoyISO);
   const [horaInput, setHoraInput] = useState(ahoraHM);
   const [lugar, setLugar] = useState("San Ramón casa funeraria");
-  const [autoCapilla, setAutoCapilla] = useState(true);
+  // const [autoCapilla, setAutoCapilla] = useState(true);
 
   // ========== EXPORTAR & SUBIR ==========
 
@@ -840,15 +840,15 @@ async function handleExportAndUpload() {
   const isTextKey = (k: Key): k is TextKey => k !== "imagen" && k !== "logo";
 
   // Auto generar capilla
-  useEffect(() => {
-    if (!autoCapilla) return;
-    setText(t => ({
-      ...t,
-      capilla: construirFraseCapilla({
-        fechaISO: fechaInput, horaHM: horaInput, lugar, capilla: capillaSeleccionada,
-      }),
-    }));
-  }, [capillaSeleccionada, fechaInput, horaInput, lugar, autoCapilla]);
+  // useEffect(() => {
+  //   if (!autoCapilla) return;
+  //   setText(t => ({
+  //     ...t,
+  //     capilla: construirFraseCapilla({
+  //       fechaISO: fechaInput, horaHM: horaInput, lugar, capilla: capillaSeleccionada,
+  //     }),
+  //   }));
+  // }, [capillaSeleccionada, fechaInput, horaInput, lugar, autoCapilla]);
 
   // Guardado/rehidratación
   const hydratingRef = React.useRef(true);
@@ -968,38 +968,48 @@ async function handleExportAndUpload() {
 
         {/* Composer Capilla */}
         {selectedKey === "capilla" && (
-          <div className="mt-4 space-y-3 border-t pt-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold">Generar texto de Capilla</div>
-              <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" checked={autoCapilla} onChange={(e)=>setAutoCapilla(e.target.checked)} /> Auto
-              </label>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Capilla</label>
-              <select className="border rounded p-2 w-full" value={capillaSeleccionada} onChange={(e)=>setCapillaSeleccionada(e.target.value)}>
-                {CAPILLAS.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Fecha</label>
-                <input type="date" className="border rounded p-2 w-full" value={fechaInput} onChange={(e)=>setFechaInput(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Hora</label>
-                <input type="time" className="border rounded p-2 w-full" value={horaInput} onChange={(e)=>setHoraInput(e.target.value)} />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Lugar</label>
-              <input type="text" className="border rounded p-2 w-full" value={lugar} onChange={(e)=>setLugar(e.target.value)} placeholder="San Ramón casa funeraria" />
-            </div>
-            <div className="text-xs text-gray-700 bg-gray-50 border rounded p-2">
-              <div className="font-semibold mb-1">Vista previa</div>
-              {construirFraseCapilla({ fechaISO: fechaInput, horaHM: horaInput, lugar, capilla: capillaSeleccionada })}
-            </div>
-          </div>
+          <Box sx={{ width: 280 }} >
+            <Typography variant="h5" color="Black" gutterBottom>
+              Generar texto de Capilla
+            </Typography>
+            <Grid container spacing={1} rowGap={2}>
+              <Grid size={12}>
+                <Select
+                  labelId="labelCapilla"
+                  id="labelCapillaSelect"
+                  value={capillaSeleccionada}
+                  label="Capilla"
+                  onChange={(e)=>setCapillaSeleccionada(e.target.value)}
+                >
+                  {CAPILLAS.map((c) => (
+                    <MenuItem key={c} value={c}>
+                      {c}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </Grid>
+                <Grid size={12}>
+                  <TextField type="date"
+                  value={fechaInput}
+                  onChange={(e)=>setFechaInput(e.target.value)}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField type="time"
+                  value={horaInput}
+                  onChange={(e)=>setHoraInput(e.target.value)}
+                  />
+                </Grid>
+                  <Grid size={12}>
+                    <TextField type="text"
+                    value={lugar}
+                    onChange={(e)=>setLugar(e.target.value)}
+                    placeholder="San Ramón casa funeraria"
+                    />
+                </Grid>
+            </Grid>
+            <Divider component="li" />   
+          </Box>
         )}
 
         {/* Controles dinámicos */}
