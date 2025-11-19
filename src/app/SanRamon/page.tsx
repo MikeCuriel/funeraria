@@ -873,15 +873,14 @@ async function handleExportAndUpload() {
   const isTextKey = (k: Key): k is TextKey => k !== "imagen" && k !== "logo";
 
   // Auto generar capilla
-  // useEffect(() => {
-  //   if (!autoCapilla) return;
-  //   setText(t => ({
-  //     ...t,
-  //     capilla: construirFraseCapilla({
-  //       fechaISO: fechaInput, horaHM: horaInput, lugar, capilla: capillaSeleccionada,
-  //     }),
-  //   }));
-  // }, [capillaSeleccionada, fechaInput, horaInput, lugar, autoCapilla]);
+  useEffect(() => {
+    setText(t => ({
+      ...t,
+      capilla: construirFraseCapilla({
+        fechaISO: fechaInput, horaHM: horaInput, lugar, capilla: capillaSeleccionada,
+      }),
+    }));
+  }, [capillaSeleccionada, fechaInput, horaInput, lugar]);
 
   // Guardado/rehidratación
   const hydratingRef = React.useRef(true);
