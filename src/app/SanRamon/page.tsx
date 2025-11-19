@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../services/dbConnection";
-import { Box, Typography, Grid, Input, Slider, Select, MenuItem, Divider, TextField, Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, Typography, Grid, Input, Slider, Select, MenuItem, Divider, TextField, Stack, ToggleButton, ToggleButtonGroup, Button, CircularProgress, Alert } from "@mui/material";
+import { useRouter } from "next/navigation";
 
 const PAGE_SLUG = "ramon";
 const LOGO_SRC = "/images/logoSanRamon.svg"; // asegúrate de que existe
@@ -577,6 +578,7 @@ export default function EditorSanRamon() {
 
   const deviceId = useDeviceId();
   const screenInfo = useScreenInfo();
+  const router = useRouter();
 
   // Defaults capilla
   const hoyISO = new Date().toISOString().slice(0,10);
@@ -761,7 +763,7 @@ async function renderExportBlob(): Promise<Blob> {
 async function handleExportAndUpload() {
   setUploadMsg(null);
   if (!folio.trim()) {
-    setUploadMsg("Ingresa un número/folio primero.");
+    setUploadMsg("Ingresa un número de celular.");
     return;
   }
   if (!drawn) {
@@ -770,12 +772,23 @@ async function handleExportAndUpload() {
   }
 
   try {
+
+    const slug = (s: string) =>
+    (s ?? '')
+    .normalize('NFKD')                      // separa acentos
+    .replace(/[\u0300-\u036f]/g, '')        // quita diacríticos
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')       // solo letras/números/_-
+    .replace(/^-+|-+$/g, '')                // recorta guiones extremos
+    .slice(0, 60) || 'memorial';
+
+
     setUploading(true);
     const blob = await renderExportBlob();
     const safe = folio.trim().replace(/[^a-zA-Z0-9_-]/g, "_");
-    const filename = `${PAGE_SLUG}-${safe}.png`;
+    const baseName = `${slug(text.nombre) + Date.now()}`.toLowerCase();
+    const filename = `${baseName}.png`;
 
-    const { error } = await supabase.storage
+     const {error } = await supabase.storage
       .from("imagenesfuneraria")
       .upload(`despedidas/${filename}`, blob, {
         contentType: "image/png",
@@ -788,17 +801,15 @@ async function handleExportAndUpload() {
     const url = data?.publicUrl;
     
     const payload = {
-      nombre: `${name}`.trim(),
-      safe,
+      nombre: `${text.nombre}`.trim(),
+      celular:safe,
       imagen_url: url,
-      bGuadalupe: true
-      // Opcional: si quieres guardar más datos, añade campos que existan en tu tabla:
-      // fecha: someDateISO, hora: someTime, capilla: currentVenue
+      bGuadalupe: false
     };
-
+  
     await supabase.from("memorial").insert(payload);
+    router.replace("/memoriales");
 
-    setUploadMsg(`✅ Subido: despedidas/${filename}`);
   } catch (err ) {
     const msg = err instanceof Error ? err.message : String(err);
     setUploadMsg(`❌ Error: ${msg}`);
@@ -980,6 +991,7 @@ async function handleExportAndUpload() {
                   value={capillaSeleccionada}
                   label="Capilla"
                   onChange={(e)=>setCapillaSeleccionada(e.target.value)}
+                  fullWidth
                 >
                   {CAPILLAS.map((c) => (
                     <MenuItem key={c} value={c}>
@@ -992,19 +1004,22 @@ async function handleExportAndUpload() {
                   <TextField type="date"
                   value={fechaInput}
                   onChange={(e)=>setFechaInput(e.target.value)}
+                  fullWidth
                   />
                 </Grid>
                 <Grid size={12}>
                   <TextField type="time"
                   value={horaInput}
                   onChange={(e)=>setHoraInput(e.target.value)}
+                  fullWidth
                   />
                 </Grid>
-                  <Grid size={12}>
+                  <Grid size={12}  >
                     <TextField type="text"
                     value={lugar}
                     onChange={(e)=>setLugar(e.target.value)}
                     placeholder="San Ramón casa funeraria"
+                    fullWidth
                     />
                 </Grid>
             </Grid>
@@ -1042,28 +1057,50 @@ async function handleExportAndUpload() {
         )}
 
         {/* Exportar y subir */}
-      <div className="mt-4 border-t pt-4 space-y-2">
-        <div className="text-sm font-semibold">Exportar y subir a Supabase</div>
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={folio}
-            onChange={(e)=>setFolio(e.target.value)}
-            placeholder="Número / Folio"
-            className="border rounded p-2 flex-1"
-          />
-          <button
-            onClick={handleExportAndUpload}
-            disabled={uploading}
-            className={`px-3 py-2 rounded text-white ${uploading ? "bg-gray-400" : "bg-emerald-600 hover:bg-emerald-700"}`}
-          >
-            {uploading ? "Subiendo..." : "Exportar PNG y subir"}
-          </button>
-        </div>
-        {uploadMsg && <div className="text-xs text-gray-700">{uploadMsg}</div>}
-      </div>
+        <Box sx={{ width: 280 }} >
+          <Typography variant="h5" color="Black" gutterBottom>
+            Enviar memorial
+          </Typography>
+          <Grid container spacing={1} rowGap={2}>
+            <Grid size={12}>
+              <TextField
+                type="text"
+                inputMode="numeric"
+                value={folio}
+                onChange={(e) => setFolio(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="Celular"
+                fullWidth
+                inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
+                label="Celular" 
+              />
+            </Grid>
+            <Button
+              onClick={handleExportAndUpload}
+              disabled={uploading}
+              variant="contained"
+              size="large"
+              color="success"
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,     // ~16px
+                px: 2,               // padding x
+                py: 1,               // padding y
+                ...(uploading
+                  ? { bgcolor: 'grey.400', '&:hover': { bgcolor: 'grey.400' } }
+                  : { bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' } }),
+              }}
+              startIcon={uploading ? <CircularProgress size={20} color="inherit" /> : undefined}
+            >
+              {uploading ? 'Subiendo...' : 'Enviar memorial'}
+            </Button>
+            {uploadMsg && 
+              <Alert severity="error">
+                {uploadMsg}
+              </Alert>
+            }
+          </Grid>
+        </Box>
+
       </div>
 
       {/* Lienzo */}
@@ -1120,3 +1157,6 @@ async function handleExportAndUpload() {
     </div>
   );
 }
+
+
+// TODO REVISAR PORQUE NO ACTUALIZA LA INFORMACION, Y PORQUE SE QUEDA CON EL ANTERIOR IMAGEN

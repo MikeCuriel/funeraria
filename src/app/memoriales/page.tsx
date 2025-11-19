@@ -51,8 +51,50 @@ export default function MemorialesPage() {
     };
   }, [isGuadalupe]);
 
+  // const eliminarMemorial = async (id: string) => {
+  //   await supabase.from("memorial").delete().eq("id", id);
+
+  //   await supabase.storage.from("imagenesfuneraria").remove([`memoriales/${id}.png`]);
+  //   setMemoriales((prev) => prev.filter((m) => m.id !== id));
+  // };
+
   const eliminarMemorial = async (id: string) => {
-    await supabase.from("memorial").delete().eq("id", id);
+    // 1. Primero obtenemos la ruta del archivo desde la BD
+    const { data, error } = await supabase
+      .from("memorial")
+      .select("identificacion") // o el nombre real de tu columna
+      .eq("id", id)
+      .single();
+
+    if (error || !data) {
+      console.error("No se pudo obtener el memorial:", error);
+      return;
+    }
+
+    // const filePath = data.imagen_url as Memorial; // ej: "memoriales/jose-de-jesus-mendoza-olmedo.png"
+
+    // // 2. Borramos el archivo del Storage
+    // const { error: storageError } = await supabase.storage
+    //   .from("imagenesfuneraria")
+    //   .remove([filePath]);
+
+    // if (storageError) {
+    //   console.error("Error al borrar del storage:", storageError);
+    //   // según tu lógica, puedes decidir si sigues o no borrando de la tabla
+    // }
+
+    // 3. Borramos el registro de la tabla
+    const { error: dbError } = await supabase
+      .from("memorial")
+      .delete()
+      .eq("id", id);
+
+    if (dbError) {
+      console.error("Error al borrar de la tabla memorial:", dbError);
+      return;
+    }
+
+    // 4. Actualizamos el estado en React
     setMemoriales((prev) => prev.filter((m) => m.id !== id));
   };
 
@@ -64,6 +106,7 @@ export default function MemorialesPage() {
   };
 
   const abrirModal = (memorial: Memorial) => {
+    console.log("abrirModal", { memorial });
     setSelectedMemorial(memorial);
     setOpenModal(true);
   };

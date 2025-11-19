@@ -1,6 +1,6 @@
 import { Dialog, DialogTitle, DialogContent } from "@mui/material";
 import Image from "next/image";
-import { Memorial } from "./page";
+import { Memorial } from './page';
 
 interface Props {
   open: boolean;
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export default function MemorialPreviewModal({ open, onClose, memorial }: Props) {
+  console.log("MemorialPreviewModal render", { memorial });
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Vista del Memorial</DialogTitle>
