@@ -326,6 +326,7 @@ function TextBox({
   onPosChange: (k: TextKey, patch: Partial<TextBoxPos>) => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
+  const editableRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; startLeftPx: number; startTopPx: number; elW: number; elH: number; } | null>(null);
   const pxFromPct = (pct: number, total: number) => (pct / 100) * total;
   const pctFromPx = (px: number, total: number) => total === 0 ? 0 : (px / total) * 100;
@@ -359,6 +360,17 @@ function TextBox({
     window.removeEventListener("mouseup", onUp);
   };
 
+    useEffect(() => {
+    if (!editableRef.current) return;
+    if (editableRef.current.innerText !== text) {
+      editableRef.current.innerText = text;
+    }
+  }, [text]);
+  
+  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    onTextChange(k, e.currentTarget.innerText);
+  };
+
   return (
     <div
       ref={boxRef}
@@ -374,20 +386,30 @@ function TextBox({
         />
       )}
       <div
+        ref={editableRef}
         contentEditable
         suppressContentEditableWarning
-        onInput={(e) => onTextChange(k, (e.target as HTMLElement).innerText)}
+        onInput={handleInput}
         className="outline-none select-text"
         style={{
-          fontSize: style.fontSize, color: style.color, fontWeight: style.fontWeight,
+          fontSize: style.fontSize,
+          color: style.color,
+          fontWeight: style.fontWeight,
           textAlign: style.textAlign,
-          paddingTop: style.padding.t, paddingRight: style.padding.r, paddingBottom: style.padding.b, paddingLeft: style.padding.l,
-          marginTop: style.margin.t, marginRight: style.margin.r, marginBottom: style.margin.b, marginLeft: style.margin.l,
-          lineHeight: 1.15, wordBreak: "break-word", userSelect: "text", whiteSpace: "pre-line",
+          paddingTop: style.padding.t,
+          paddingRight: style.padding.r,
+          paddingBottom: style.padding.b,
+          paddingLeft: style.padding.l,
+          marginTop: style.margin.t,
+          marginRight: style.margin.r,
+          marginBottom: style.margin.b,
+          marginLeft: style.margin.l,
+          lineHeight: 1.15,
+          wordBreak: "break-word",
+          userSelect: "text",
+          whiteSpace: "pre-line",
         }}
-      >
-        {text}
-      </div>
+      />
     </div>
   );
 }
@@ -837,10 +859,10 @@ async function handleExportAndUpload() {
       padding: { t: 0, r: 0, b: 0, l: 0 }, margin: { t: 0, r: 0, b: 0, l: 0 } },
   });
   const [boxes, setBoxes] = useState<Record<TextKey, TextBoxPos>>({
-    titulo: { xPct: 10, yPct: 18, widthPct: 80 },
-    nombre: { xPct: 10, yPct: 34, widthPct: 80 },
-    fecha:  { xPct: 10, yPct: 50, widthPct: 80 },
-    capilla:{ xPct: 10, yPct: 64, widthPct: 80 },
+    titulo: { xPct: 0, yPct: 18, widthPct: 100 },
+    nombre: { xPct: 0, yPct: 34, widthPct: 100 },
+    fecha:  { xPct: 0, yPct: 50, widthPct: 100 },
+    capilla:{ xPct: 0, yPct: 64, widthPct: 100 },
   });
 
   // Overlays: luto (editable) y logo (siempre visible)
